@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="BeaconCloud.main" target="1.8" />
+      <module name="BeaconCloud.test" target="1.8" />
+      <module name="ExtraInventory.main" target="1.8" />
+      <module name="ExtraInventory.test" target="1.8" />
+      <module name="PlayerSaveStateLib.main" target="1.8" />
+      <module name="PlayerSaveStateLib.test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

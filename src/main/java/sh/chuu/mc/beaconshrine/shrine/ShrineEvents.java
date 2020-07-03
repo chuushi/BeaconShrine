@@ -1,0 +1,122 @@
+package sh.chuu.mc.beaconshrine.shrine;
+
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ShulkerBox;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.utils.BlockUtils;
+import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
+
+import static sh.chuu.mc.beaconshrine.utils.CloudLoreUtils.INGOT;
+
+public class ShrineEvents implements Listener {
+    private final BeaconShrine plugin = BeaconShrine.getInstance();
+    private final ShrineManager manager = plugin.getShrineManager();
+    private final BaseComponent[] shrineInitFailText = new BaseComponent[]{new TextComponent("Shrine is not set up properly; run /shrinehelp")};
+
+    @EventHandler
+    public void shrineClick(PlayerInteractEvent ev) {
+        if (ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK || ev.getPlayer().isSneaking())
+            return;
+
+        // New shrine detection
+        ItemStack item = ev.getItem();
+        if (item != null) {
+            if (item.getType() == INGOT) {
+                ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
+                if (shulker != null) {
+                    Inventory inv = shulker.getInventory();
+                    if (CloudLoreUtils.getShrineId(inv) == -1) {
+                        // new shulker box
+                        int empty = inv.firstEmpty();
+                        if (empty == -1) return;
+
+                        ShrineMultiblock shrine;
+                        int id = CloudLoreUtils.getShrineId(item);
+                        if (id == -1) {
+                            shrine = manager.newShrine(shulker, null);
+                        } else {
+                            shrine = manager.updateShrine(id, shulker);
+                            shrine.getInventory().addItem(item);
+                        }
+                        item.setAmount(item.getAmount() - 1);
+                        inv.setItem(empty, shrine.createShrineItem());
+                        ev.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+        }
+
+        ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
+        if (shulker == null) return;
+
+        int id = CloudLoreUtils.getShrineId(shulker.getInventory());
+        if (id != -1) {
+            Player p = ev.getPlayer();
+            if (!manager.openShrineGui(p, id))
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
+            ev.setCancelled(true);
+            return;
+        }
+
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void shireShulkerPlace(BlockPlaceEvent ev) {
+        BlockState d = ev.getBlock().getState();
+        if (d instanceof ShulkerBox) {
+            ShulkerBox sb = (ShulkerBox) d;
+            int id = CloudLoreUtils.getShrineId(sb.getInventory());
+            if (id != -1)
+                manager.updateShrine(id, sb);
+        }
+    }
+
+    @EventHandler
+    public void guiClick(InventoryClickEvent ev) {
+        HumanEntity he = ev.getWhoClicked();
+        Inventory inv = ev.getClickedInventory();
+        int id = manager.getGuiViewingId(he);
+        if (id == -1 || inv != ev.getView().getTopInventory())
+            return;
+
+        ev.setCancelled(true);
+
+        manager.clickedGui(id, ev.getSlot(), (Player) he);
+    }
+
+    @EventHandler
+    public void guiClose(InventoryCloseEvent ev) {
+        manager.closeShrineGui(ev.getPlayer());
+    }
+
+    private ShulkerBox getValidShulkerNear(Block center, int tier) {
+        ShulkerBox ret = null;
+        for (Block b : BlockUtils.getSurroundingInBeaconBeam(center, ShrineMultiblock.RADIUS, tier)) {
+            BlockState state = b.getState();
+            if (state instanceof ShulkerBox && ((ShulkerBox) state).getCustomName() != null) {
+                // prevent counting in when there's more than two shulker boxes on the beacon beam(s)
+                if (ret != null)
+                    return null;
+                ret = (ShulkerBox) state;
+            }
+        }
+        return ret;
+    }
+}

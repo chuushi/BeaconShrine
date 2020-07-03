@@ -1,0 +1,15 @@
+main: sh.chuu.mc.beaconshrine.BeaconShrine
+name: BeaconShrine
+author: Simon Chuu
+api-version: 1.16
+version: 1.0.0-SNAPSHOT
+
+commands:
+  beaconshrine:
+    description: BeaconShrine command
+    permission: beaconshrine.command.beaconshrine
+    usage: /<command>
+
+permissions:
+  beaconshrine.command.beaconshrine:
+    default: true
