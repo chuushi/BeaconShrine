@@ -17,7 +17,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
 
-import static sh.chuu.mc.beaconshrine.utils.CloudLoreUtils.BLOCK;
+import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.*;
 
 class ShrineMultiblock {
     static final int RADIUS = 4;
@@ -90,7 +90,7 @@ class ShrineMultiblock {
     boolean isValid() {
         Block shulkerBlock = w.getBlockAt(x, shulkerY, z);
         BlockState shulkerData = shulkerBlock.getState();
-        if (!(shulkerData instanceof ShulkerBox) || this.id != CloudLoreUtils.getShrineId(((ShulkerBox) shulkerData).getInventory()))
+        if (!(shulkerData instanceof ShulkerBox) || this.id != getShrineId(((ShulkerBox) shulkerData).getInventory()))
             return false;
 
         BlockState beaconState = beaconY == -1 ? null : w.getBlockAt(x, beaconY, z).getState();
@@ -130,9 +130,9 @@ class ShrineMultiblock {
             shulker.setItemMeta(m);
         }
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
-        gui.setItem(1, CloudLoreUtils.CLOUD_CHEST);
+        gui.setItem(1, CLOUD_CHEST);
         gui.setItem(4, shulker);
-        gui.setItem(7, CloudLoreUtils.createShopItem(3));
+        gui.setItem(7, createShopItem(3));
         return gui;
     }
 
@@ -153,11 +153,7 @@ class ShrineMultiblock {
         cs.set("loc", new int[]{x, z, shulkerY, beaconY});
     }
 
-    ItemStack createShrineItem() {
-        return CloudLoreUtils.createShrineItem(cc + name, id, x, z);
+    void putShrineItem() {
+        getInventory().addItem(createShrineItem(cc + name, id, x, z));
     }
-
-    // TODO Possibly open up beacon inventory??
-//    public Inventory getBeaconInventory() {
-//    }
 }

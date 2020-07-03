@@ -1,8 +1,9 @@
 package sh.chuu.mc.beaconshrine.userstate;
 
-import org.bukkit.Material;
+import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,6 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
 import sh.chuu.mc.beaconshrine.utils.ExperienceUtils;
 
 import java.io.IOException;
@@ -21,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 
-import static sh.chuu.mc.beaconshrine.utils.CloudLoreUtils.INVENTORY_NAME;
+import static sh.chuu.mc.beaconshrine.userstate.CloudInventoryLores.*;
 
 public class CloudManager implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -41,11 +43,27 @@ public class CloudManager implements Listener {
         }
     }
 
-    public boolean setInventory(Player p, Inventory inv) {
+    public boolean savePlayerState(Player p) {
         UserCloud is = invs.get(p);
-        if (is == null)
-            return false;
+        if (is == null) return false;
+
+        int slot = 44;
+        Inventory inv = CloudLoreUtils.getInventory(p, INVENTORY_NAME);
+        ItemStack locRestore = createTeleportationScroll(p.getLocation());
+        if (locRestore != null)
+            inv.setItem(slot--, locRestore);
+        ItemStack expRestore = createExpItem(p);
+        if (expRestore != null)
+            inv.setItem(slot--, expRestore);
+        inv.setItem(slot--, CloudLoreUtils.createEnderChestItem(p));
         is.setInventory(inv);
+        p.getInventory().clear();
+        p.getEnderChest().clear();
+        p.setLevel(0);
+        p.setExp(0);
+        p.setHealth(20);
+        p.setFoodLevel(20);
+        p.setSaturation(100);
         return true;
     }
 
@@ -58,20 +76,13 @@ public class CloudManager implements Listener {
         return true;
     }
 
-    public void saveExp(Player p) {
+    private boolean applyExp(Player p, int exp) {
         UserCloud is = invs.get(p);
-        if (is != null)
-            is.setExp(ExperienceUtils.getExp(p));
-    }
-
-    private boolean applyExp(Player p) {
-        UserCloud is = invs.get(p);
-        if (is == null || is.getExp() == 0)
+        if (is == null || exp == 0)
             return false;
 
         int currentExp = ExperienceUtils.getExp(p);
-        ExperienceUtils.changeExp(p, currentExp + is.getExp());
-        is.setExp(0);
+        ExperienceUtils.changeExp(p, currentExp + exp);
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 1, 1);
         return true;
     }
@@ -103,15 +114,11 @@ public class CloudManager implements Listener {
             viewing.remove(he);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onCloudSpecialItemClick(InventoryClickEvent ev) {
-        HumanEntity he = ev.getWhoClicked();
+        HumanEntity p = ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
-        if (!(he instanceof Player) || inv != ev.getView().getTopInventory())
-            return;
-
-        Player p = (Player) he;
-        if (!viewing.contains(p))
+        if (inv != ev.getView().getTopInventory() || !viewing.contains(p))
             return;
 
         ItemStack item = ev.getCurrentItem();
@@ -122,13 +129,20 @@ public class CloudManager implements Listener {
         if (meta == null || !meta.hasLore())
             return;
 
-        // 1. If EXP bottles, apply EXPs
-        if (item.getType() == Material.EXPERIENCE_BOTTLE) {
-            if (ev.isRightClick() && applyExp(p))
+        if (item.getType() == EXP_ITEM_TYPE) {
+            int exp = getExpItemValue(item);
+            if (exp == -1) return;
+            if (ev.isRightClick() && applyExp((Player) p, exp)) {
                 inv.setItem(ev.getSlot(), null);
+            }
+            ev.setCancelled(true);
+        } else if (item.getType() == TELEPORT_ITEM_TYPE) {
+            Location loc = getTeleportLocation(item);
+            if (loc == null) return;
+            if (ev.isRightClick() && p.teleport(loc)) {
+                inv.setItem(ev.getSlot(), null);
+            }
             ev.setCancelled(true);
         }
-        // 2. If paper (ticket), teleport to the location mentioned in lore
-        // TODO Teleportation stuffs??
     }
 }

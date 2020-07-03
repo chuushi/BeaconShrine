@@ -13,3 +13,5 @@ commands:
 permissions:
   beaconshrine.command.beaconshrine:
     default: true
+  beaconshrine.admin:
+    default: op

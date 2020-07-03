@@ -20,9 +20,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
-import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
 
-import static sh.chuu.mc.beaconshrine.utils.CloudLoreUtils.INGOT;
+import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.INGOT;
+import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.getShrineId;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -41,21 +41,20 @@ public class ShrineEvents implements Listener {
                 ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
                 if (shulker != null) {
                     Inventory inv = shulker.getInventory();
-                    if (CloudLoreUtils.getShrineId(inv) == -1) {
+                    if (getShrineId(inv) == -1) {
                         // new shulker box
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
                         ShrineMultiblock shrine;
-                        int id = CloudLoreUtils.getShrineId(item);
+                        int id = getShrineId(item);
                         if (id == -1) {
                             shrine = manager.newShrine(shulker, null);
                         } else {
                             shrine = manager.updateShrine(id, shulker);
-                            shrine.getInventory().addItem(item);
                         }
                         item.setAmount(item.getAmount() - 1);
-                        inv.setItem(empty, shrine.createShrineItem());
+                        shrine.putShrineItem();
                         ev.setCancelled(true);
                         return;
                     }
@@ -66,7 +65,7 @@ public class ShrineEvents implements Listener {
         ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
         if (shulker == null) return;
 
-        int id = CloudLoreUtils.getShrineId(shulker.getInventory());
+        int id = getShrineId(shulker.getInventory());
         if (id != -1) {
             Player p = ev.getPlayer();
             if (!manager.openShrineGui(p, id))
@@ -82,7 +81,7 @@ public class ShrineEvents implements Listener {
         BlockState d = ev.getBlock().getState();
         if (d instanceof ShulkerBox) {
             ShulkerBox sb = (ShulkerBox) d;
-            int id = CloudLoreUtils.getShrineId(sb.getInventory());
+            int id = getShrineId(sb.getInventory());
             if (id != -1)
                 manager.updateShrine(id, sb);
         }

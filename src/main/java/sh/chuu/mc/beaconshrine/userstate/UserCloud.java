@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import static sh.chuu.mc.beaconshrine.utils.CloudLoreUtils.INVENTORY_NAME;
+import static sh.chuu.mc.beaconshrine.userstate.CloudInventoryLores.INVENTORY_NAME;
 
 public class UserCloud {
     private static final int SIZE = 45;
@@ -20,7 +20,6 @@ public class UserCloud {
     private final File configFile;
     private final YamlConfiguration config;
     private Inventory inv = null;
-    private int exp = 0;
 
     public UserCloud(UUID uuid) throws IOException {
         this.configFile = new File(plugin.getDataFolder() + "/inventories", uuid + ".yml");
@@ -44,7 +43,6 @@ public class UserCloud {
         ItemStack[] items = BukkitSerialization.itemStackArrayFromBase64(s);
         inv = Bukkit.createInventory(null, items.length, INVENTORY_NAME);
         inv.setContents(items);
-        exp = config.getInt("e", 0);
     }
 
     public Inventory getInventory() {
@@ -55,17 +53,8 @@ public class UserCloud {
         this.inv = inv;
     }
 
-    public int getExp() {
-        return this.exp;
-    }
-
-    public void setExp(int exp) {
-        this.exp = exp;
-    }
-
     public void saveInventory() {
         config.set("i", inv == null ? null : BukkitSerialization.itemStackArrayToBase64(inv.getContents()));
-        config.set("e", exp == 0 ? null : exp);
         try {
             config.save(configFile);
         } catch (IOException ex) {
