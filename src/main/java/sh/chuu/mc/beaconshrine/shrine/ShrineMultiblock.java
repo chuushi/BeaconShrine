@@ -204,7 +204,6 @@ public class ShrineMultiblock {
     void closeMerchant(Player p) {
         if (trader != p) return;
         int uses = merchant.getRecipe(0).getUses();
-        p.sendMessage(uses + " " + scrollUses);
         if (uses != scrollUses) {
             if (firstTradeTime == 0) firstTradeTime = System.currentTimeMillis();
             scrollUses = uses;
