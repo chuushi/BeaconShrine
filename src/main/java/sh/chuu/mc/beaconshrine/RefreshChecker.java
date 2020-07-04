@@ -21,7 +21,7 @@ public class RefreshChecker implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoinDuringRefresh(PlayerJoinEvent ev) {
         Player p = ev.getPlayer();
-        if (p.getLastPlayed() > time)
+        if (!p.hasPlayedBefore() || p.getLastPlayed() > time)
             return;
         plugin.getCloudManager().savePlayerState(p);
         p.teleport(Bukkit.getWorlds().get(0).getSpawnLocation()); // Imagine the spawn location is in the nether >w>
