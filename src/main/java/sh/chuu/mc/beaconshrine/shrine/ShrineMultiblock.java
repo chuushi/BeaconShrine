@@ -59,7 +59,7 @@ public class ShrineMultiblock {
     ShrineMultiblock(int id, ConfigurationSection cs) {
         this.id = id;
         this.firstTradeTime = cs.getLong("scTime", 0);
-        this.scrollMax = cs.getInt("scMax", 5);
+        this.scrollMax = cs.getInt("scMax", 3);
         this.scrollUses = cs.getInt("scUses", 0);
 
         String name = cs.getString("name");
@@ -79,7 +79,7 @@ public class ShrineMultiblock {
         this.id = id;
         this.beaconY = beaconY;
         this.firstTradeTime = 0;
-        this.scrollMax = 5;
+        this.scrollMax = 3;
         this.scrollUses = 0;
 
         setShulker(w, x, z, shulkerY, name, color);
