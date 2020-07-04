@@ -104,7 +104,7 @@ public class ShrineEvents implements Listener {
 
         ev.setCancelled(true);
 
-        manager.clickedGui(id, ev.getSlot(), (Player) he);
+        manager.clickedGui(id, ev.getCurrentItem(), (Player) he);
     }
 
     @EventHandler

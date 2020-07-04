@@ -3,11 +3,15 @@ package sh.chuu.mc.beaconshrine.shrine;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Beacon;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 
 import java.io.File;
@@ -16,6 +20,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
+
+import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.*;
 
 public class ShrineManager {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -71,30 +77,44 @@ public class ShrineManager {
         return n == null ? -1 : n.getId();
     }
 
-    public void clickedGui(int id, int slot, Player p) {
-        ShrineMultiblock shrine = shrines.get(id);
-        switch (slot) {
-            case 1:
-                // Cloud chest
-                p.closeInventory();
-                Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getCloudManager().openInventory(p), 1L);
-                break;
-            case 4:
+    public void clickedGui(int id, ItemStack slot, Player p) {
+        if (slot == null)
+            return;
+
+        Material type = slot.getType();
+        if (type == CLOUD_CHEST_ITEM_TYPE) {
+            p.closeInventory();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getCloudManager().openInventory(p), 1L);
+            return;
+        }
+
+        if (type == ENDER_CHEST_ITEM_TYPE) {
+            p.closeInventory();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(p.getEnderChest()), 1L);
+            return;
+        }
+
+        if (type == SHOP_ITEM_TYPE) {
+            ShrineMultiblock shrine = shrines.get(id);
+            if (shrine.getTrader() != null) {
+                return;
+            }
+            p.closeInventory();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                viewing.put(p, shrine);
+                shrine.openMerchant(p);
+            }, 1L);
+            return;
+        }
+
+        ItemMeta im = slot.getItemMeta();
+        if (im instanceof BlockStateMeta) {
+            BlockState bs = ((BlockStateMeta) im).getBlockState();
+            if (bs instanceof ShulkerBox){
                 // Shulker box within
                 p.closeInventory();
-                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrine.getInventory()), 1L);
-                break;
-            case 7:
-                // Shop
-                if (shrine.getTrader() != null) {
-                    break;
-                }
-                p.closeInventory();
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    viewing.put(p, shrine);
-                    shrine.openMerchant(p);
-                }, 1L);
-                break;
+                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrines.get(id).getInventory()), 1L);
+            }
         }
     }
 

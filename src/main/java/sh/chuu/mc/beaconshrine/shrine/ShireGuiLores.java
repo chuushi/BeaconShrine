@@ -16,12 +16,16 @@ import java.util.Map;
 public class ShireGuiLores {
     public static final ItemStack CLOUD_CHEST_ITEM;
     public static final ItemStack SHOP_ITEM;
+    public static final ItemStack ENDER_CHEST_ITEM;
+    public static final Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
+    public static final Material SHOP_ITEM_TYPE = Material.EMERALD;
+    public static final Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
     public static final Material INGOT = Material.NETHERITE_INGOT;
     static final long RESTOCK_TIMER = 21600000;
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
 
     static {
-        CLOUD_CHEST_ITEM = new ItemStack(Material.CHEST_MINECART);
+        CLOUD_CHEST_ITEM = new ItemStack(CLOUD_CHEST_ITEM_TYPE);
         ItemMeta cim = CLOUD_CHEST_ITEM.getItemMeta();
         //noinspection ConstantConditions Existing item always have ItemMeta
         cim.setDisplayName(ChatColor.YELLOW + "Open Personal Cloud Chest");
@@ -30,13 +34,21 @@ public class ShireGuiLores {
         cim.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         CLOUD_CHEST_ITEM.setItemMeta(cim);
 
-        SHOP_ITEM = new ItemStack(Material.EMERALD);
+        SHOP_ITEM = new ItemStack(SHOP_ITEM_TYPE);
         ItemMeta sim = SHOP_ITEM.getItemMeta();
         //noinspection ConstantConditions Existing item always have ItemMeta
-        sim.setDisplayName(ChatColor.YELLOW + "Scroll Shop");
+        sim.setDisplayName(ChatColor.YELLOW + "Open Scroll Shop");
         sim.addEnchant(Enchantment.DURABILITY, 1, true);
         sim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         SHOP_ITEM.setItemMeta(sim);
+
+        ENDER_CHEST_ITEM = new ItemStack(ENDER_CHEST_ITEM_TYPE);
+        ItemMeta eim = ENDER_CHEST_ITEM.getItemMeta();
+        //noinspection ConstantConditions Existing item always have ItemMeta
+        eim.setDisplayName(ChatColor.YELLOW + "Open Ender Chest");
+        eim.addEnchant(Enchantment.DURABILITY, 1, true);
+        eim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
+        ENDER_CHEST_ITEM.setItemMeta(eim);
     }
 
     public static ItemStack createShrineItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {

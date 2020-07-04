@@ -173,16 +173,20 @@ public class ShrineMultiblock {
     }
 
     Inventory getGui(Player p) {
+        // TODO figure out if setting material is required (ItemMeta contains item info)
         ItemStack shulker = new ItemStack(BlockUtils.getShulkerBoxFromDyeColor(color));
-        ItemMeta m = shulker.getItemMeta();
-        if (m instanceof BlockStateMeta) {
-            ((BlockStateMeta) m).setBlockState(w.getBlockAt(x, shulkerY, z).getState());
-            m.setDisplayName(ChatColor.YELLOW + "Open Shrine Shulker Box");
-            shulker.setItemMeta(m);
-        }
+        BlockStateMeta m = (BlockStateMeta) shulker.getItemMeta();
+        ShulkerBox state = (ShulkerBox) w.getBlockAt(x, shulkerY, z).getState();
+        boolean hasEnderChest = state.getInventory().contains(Material.ENDER_CHEST);
+
+        m.setBlockState(state);
+        m.setDisplayName(ChatColor.YELLOW + "Open Shrine Shulker Box");
+        shulker.setItemMeta(m);
+
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
-        gui.setItem(1, CLOUD_CHEST_ITEM);
-        gui.setItem(4, shulker);
+        gui.setItem(0, shulker);
+        gui.setItem(2, CLOUD_CHEST_ITEM);
+        if (hasEnderChest) gui.setItem(1, ENDER_CHEST_ITEM);
         gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
         return gui;
     }
