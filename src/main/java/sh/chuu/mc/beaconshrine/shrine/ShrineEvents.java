@@ -8,7 +8,9 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -30,14 +32,17 @@ public class ShrineEvents implements Listener {
     private final ShrineManager manager = plugin.getShrineManager();
     private final BaseComponent[] shrineInitFailText = new BaseComponent[]{new TextComponent("Shrine is not set up properly; run /shrinehelp")};
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
     public void shrineClick(PlayerInteractEvent ev) {
-        if (ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK || ev.getPlayer().isSneaking())
+        if (ev.getPlayer().isSneaking() || ev.useInteractedBlock() == Event.Result.DENY
+                || ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK)
             return;
 
         // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {
+            if ((item.getType().isBlock() || ev.useItemInHand() == Event.Result.DENY))
+            return;
             if (item.getType() == INGOT) {
                 ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
                 if (shulker != null) {
@@ -63,6 +68,9 @@ public class ShrineEvents implements Listener {
             }
         }
 
+        Block b = ev.getClickedBlock();
+        if (b != null && b.getType().isInteractable()) return;
+
         ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
         if (shulker == null) return;
 
@@ -72,7 +80,6 @@ public class ShrineEvents implements Listener {
             if (!manager.openShrineGui(p, id))
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
             ev.setCancelled(true);
-            return;
         }
 
     }

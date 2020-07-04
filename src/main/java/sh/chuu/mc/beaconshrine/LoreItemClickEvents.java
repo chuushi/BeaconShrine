@@ -4,8 +4,11 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -24,6 +27,10 @@ public class LoreItemClickEvents implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void beaconShrineItemUse(PlayerInteractEvent ev) {
+        if (ev.useItemInHand() == Event.Result.DENY) return;
+        Block b = ev.getClickedBlock();
+        if (b != null && b.getType().isInteractable()) return;
+
         Action action = ev.getAction();
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = ev.getItem();
