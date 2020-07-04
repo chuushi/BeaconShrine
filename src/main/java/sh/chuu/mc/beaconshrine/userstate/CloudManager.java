@@ -1,5 +1,6 @@
 package sh.chuu.mc.beaconshrine.userstate;
 
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -146,11 +147,18 @@ public class CloudManager implements Listener {
             ev.setCancelled(true);
         } else if (item.getType() == TELEPORT_ITEM_TYPE) {
             Location loc = getTeleportLocation(item);
-            if (loc == null) return;
-            if (ev.isRightClick() && p.teleport(loc)) {
-                inv.setItem(ev.getSlot(), null);
+            if (loc != null) {
+                if (ev.isRightClick()) {
+                    //noinspection ConstantConditions getWorld() always exists
+                    if (loc.getWorld().getWorldBorder().isInside(loc) && p.teleport(loc)) {
+                        inv.setItem(ev.getSlot(), null);
+                    } else {
+                        p.sendMessage(ChatColor.RED + "That area of the world is still inaccessible!");
+                    }
+                    p.closeInventory();
+                }
+                ev.setCancelled(true);
             }
-            ev.setCancelled(true);
         }
     }
 }
