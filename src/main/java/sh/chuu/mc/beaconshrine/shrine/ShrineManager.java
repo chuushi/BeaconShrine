@@ -78,9 +78,6 @@ public class ShrineManager {
     }
 
     public void clickedGui(int id, ItemStack slot, Player p) {
-        if (slot == null)
-            return;
-
         Material type = slot.getType();
         if (type == CLOUD_CHEST_ITEM_TYPE) {
             p.closeInventory();

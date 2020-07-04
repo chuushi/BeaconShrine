@@ -2,7 +2,10 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -11,17 +14,23 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Merchant;
+import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import sh.chuu.mc.beaconshrine.utils.BlockUtils;
+import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
+import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.Iterator;
+import java.util.List;
 
 import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.*;
 
 public class ShrineMultiblock {
+    private final BeaconShrine plugin = BeaconShrine.getInstance();
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
     static final int RADIUS = 4;
     private final int id;
@@ -83,10 +92,6 @@ public class ShrineMultiblock {
         this.scrollUses = 0;
 
         setShulker(w, x, z, shulkerY, name, color);
-    }
-
-    Location getLocation() {
-        return new Location(w, x + 0.5, shulkerY + 0.5, z + 0.5);
     }
 
     int distanceSquaredXZ(int x, int z) {
@@ -186,9 +191,37 @@ public class ShrineMultiblock {
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
         gui.setItem(0, shulker);
         gui.setItem(2, CLOUD_CHEST_ITEM);
-        if (hasEnderChest) gui.setItem(1, ENDER_CHEST_ITEM);
         gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
+        if (hasEnderChest) gui.setItem(1, ENDER_CHEST_ITEM);
+        ItemStack[] c = plugin.getCloudManager().getInventoryContents(p);
+        if (c != null && c.length == 45) {
+            // set non-consuming teleportation
+            setQuickTeleportItem(gui, 3, p, c[42]);
+            setQuickTeleportItem(gui, 4, p, c[43]);
+            setQuickTeleportItem(gui, 5, p, c[44]);
+        }
         return gui;
+    }
+
+    private void setQuickTeleportItem(Inventory gui, int index, Player p, ItemStack scroll) {
+        BeaconShireItemUtils.WarpScroll ws = BeaconShireItemUtils.getWarpScrollData(scroll);
+        if (ws != null && ws.owner.equals(p.getUniqueId())) {
+            ItemStack i = scroll.clone();
+            ItemMeta im = i.getItemMeta();
+            if (this.id == ws.id) {
+                //noinspection ConstantConditions if ws exists, im also exists
+                im.setLore(ImmutableList.of(ChatColor.GRAY + "You are here"));
+            } else {
+                //noinspection ConstantConditions if ws exists, im also exists
+                List<String> l = im.getLore();
+                //noinspection ConstantConditions if ws exists, l also exists
+                l.set(2, ChatColor.YELLOW + "Right click to warp");
+                im.setLore(l);
+            }
+            i.setItemMeta(im);
+            gui.setItem(index, i);
+            p.getInventory().addItem(i);
+        }
     }
 
     void openMerchant(Player p) {

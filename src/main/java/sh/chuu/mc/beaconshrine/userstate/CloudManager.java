@@ -51,12 +51,12 @@ public class CloudManager implements Listener {
         int slot = 44;
         Inventory inv = BeaconShireItemUtils.getInventory(p, INVENTORY_NAME);
         ItemStack locRestore = createTeleportationScroll(p.getLocation());
-        if (locRestore != null)
-            inv.setItem(slot--, locRestore);
+        inv.setItem(slot--, locRestore);
         ItemStack expRestore = createExpItem(p);
         if (expRestore != null)
             inv.setItem(slot--, expRestore);
-        inv.setItem(slot--, BeaconShireItemUtils.createEnderChestItem(p));
+        // update below to slot-- when we need to add more items
+        inv.setItem(slot, BeaconShireItemUtils.createEnderChestItem(p));
         is.setInventory(inv);
         p.getInventory().clear();
         p.getEnderChest().clear();
@@ -66,6 +66,13 @@ public class CloudManager implements Listener {
         p.setFoodLevel(20);
         p.setSaturation(100);
         return true;
+    }
+
+    public ItemStack[] getInventoryContents(Player p) {
+        UserCloud is = invs.get(p);
+        if (is == null)
+            return null;
+        return is.getInventory().getContents();
     }
 
     public boolean openInventory(Player p) {
