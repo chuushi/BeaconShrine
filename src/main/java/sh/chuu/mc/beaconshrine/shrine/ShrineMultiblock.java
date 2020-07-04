@@ -15,11 +15,14 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
-import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.*;
+import java.util.Iterator;
 
-class ShrineMultiblock {
+import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.*;
+
+public class ShrineMultiblock {
+    public static final Material BLOCK = Material.NETHERITE_BLOCK;
     static final int RADIUS = 4;
     private final int id;
     private String name;
@@ -30,6 +33,11 @@ class ShrineMultiblock {
     private int beaconY;
     private DyeColor color;
     private ChatColor cc;
+    private long firstTradeTime;
+    private int scrollUses;
+    private int scrollMax;
+    private Player trader = null;
+    private Merchant merchant = null;
 
     /**
      * When creating this, assert that ShulkerBox shulker.getCustomName() is not null.
@@ -48,9 +56,32 @@ class ShrineMultiblock {
                 dyed ? shulker.getColor() : null);
     }
 
-    ShrineMultiblock(int id, World w, int x, int z, int shulkerY, int beaconY, String name, DyeColor color) {
+    ShrineMultiblock(int id, ConfigurationSection cs) {
+        this.id = id;
+        this.firstTradeTime = cs.getLong("scTime", 0);
+        this.scrollMax = cs.getInt("scMax", 5);
+        this.scrollUses = cs.getInt("scUses", 0);
+
+        String name = cs.getString("name");
+        String colorStr = cs.getString("color");
+        DyeColor color = colorStr == null ? null : DyeColor.valueOf(colorStr);
+        World w = Bukkit.getWorld(cs.getString("world"));
+        Iterator<Integer> loc = cs.getIntegerList("loc").iterator();
+        int x = loc.next();
+        int z = loc.next();
+        int shulkerY = loc.next();
+        this.beaconY = loc.next();
+
+        setShulker(w, x, z, shulkerY, name, color);
+    }
+
+    private ShrineMultiblock(int id, World w, int x, int z, int shulkerY, int beaconY, String name, DyeColor color) {
         this.id = id;
         this.beaconY = beaconY;
+        this.firstTradeTime = 0;
+        this.scrollMax = 5;
+        this.scrollUses = 0;
+
         setShulker(w, x, z, shulkerY, name, color);
     }
 
@@ -87,7 +118,7 @@ class ShrineMultiblock {
      *
      * @return true if this shrine is valid
      */
-    boolean isValid() {
+    public boolean isValid() {
         Block shulkerBlock = w.getBlockAt(x, shulkerY, z);
         BlockState shulkerData = shulkerBlock.getState();
         if (!(shulkerData instanceof ShulkerBox) || this.id != getShrineId(((ShulkerBox) shulkerData).getInventory()))
@@ -116,6 +147,26 @@ class ShrineMultiblock {
         return false;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    Player getTrader() {
+        return trader;
+    }
+
+    public World getWorld() {
+        return w;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
     Inventory getInventory() {
         BlockState state = w.getBlockAt(x, shulkerY, z).getState();
         return state instanceof ShulkerBox ? ((ShulkerBox) state).getInventory() : null;
@@ -130,20 +181,36 @@ class ShrineMultiblock {
             shulker.setItemMeta(m);
         }
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
-        gui.setItem(1, CLOUD_CHEST);
+        gui.setItem(1, CLOUD_CHEST_ITEM);
         gui.setItem(4, shulker);
-        gui.setItem(7, createShopItem(3));
+        gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1));
         return gui;
     }
 
-    Merchant getMerchant() {
-        Merchant merchant = Bukkit.createMerchant(cc + name + " Scroll Shop");
-        MerchantRecipe netRecipe = new MerchantRecipe(CloudLoreUtils.createWarpScroll(id, name, cc), 5);
-        netRecipe.addIngredient(new ItemStack(Material.NETHERITE_INGOT));
-        MerchantRecipe diaRecipe = new MerchantRecipe(CloudLoreUtils.createWarpScroll(id, name, cc), 5);
-        diaRecipe.addIngredient(new ItemStack(Material.DIAMOND, 4));
-        merchant.setRecipes(ImmutableList.of(netRecipe, diaRecipe));
-        return merchant;
+    void openMerchant(Player p) {
+        if (System.currentTimeMillis() - firstTradeTime > 21600000) { // 6 hours
+            scrollUses = 0;
+            firstTradeTime = 0;
+        }
+
+        merchant = Bukkit.createMerchant(name + " Scroll Shop");
+        trader = p;
+        MerchantRecipe recipe = new MerchantRecipe(BeaconShireItemUtils.createWarpScroll(id, name, cc, p), scrollUses, scrollMax, false);
+        recipe.addIngredient(new ItemStack(Material.NETHERITE_SCRAP));
+        merchant.setRecipes(ImmutableList.of(recipe));
+        p.openMerchant(merchant, true);
+    }
+
+    void closeMerchant(Player p) {
+        if (trader != p) return;
+        int uses = merchant.getRecipe(0).getUses();
+        p.sendMessage(uses + " " + scrollUses);
+        if (uses != scrollUses) {
+            if (firstTradeTime == 0) firstTradeTime = System.currentTimeMillis();
+            scrollUses = uses;
+        }
+        trader = null;
+        merchant = null;
     }
 
     void save(ConfigurationSection cs) {
@@ -151,9 +218,12 @@ class ShrineMultiblock {
         cs.set("color", color == null ? null : color.toString());
         cs.set("world", w.getName());
         cs.set("loc", new int[]{x, z, shulkerY, beaconY});
+        cs.set("scTime", firstTradeTime);
+        cs.set("scMax", scrollMax);
+        cs.set("scUses", scrollUses);
     }
 
     void putShrineItem() {
-        getInventory().addItem(createShrineItem(cc + name, id, x, z));
+        getInventory().addItem(createShrineItem(name, cc, id, x, z));
     }
 }

@@ -14,6 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -21,8 +22,8 @@ import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.INGOT;
-import static sh.chuu.mc.beaconshrine.shrine.ShireInventoryLores.getShrineId;
+import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.INGOT;
+import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.getShrineId;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -34,7 +35,7 @@ public class ShrineEvents implements Listener {
         if (ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK || ev.getPlayer().isSneaking())
             return;
 
-        // New shrine detection
+        // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {
             if (item.getType() == INGOT) {
@@ -92,7 +93,7 @@ public class ShrineEvents implements Listener {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
         int id = manager.getGuiViewingId(he);
-        if (id == -1 || inv != ev.getView().getTopInventory())
+        if (id == -1 || inv != ev.getView().getTopInventory() || inv.getType() == InventoryType.MERCHANT)
             return;
 
         ev.setCancelled(true);

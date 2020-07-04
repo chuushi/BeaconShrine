@@ -13,30 +13,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ShireInventoryLores {
-    public static final ItemStack CLOUD_CHEST;
-    public static final Material BLOCK = Material.NETHERITE_BLOCK;
+public class ShireGuiLores {
+    public static final ItemStack CLOUD_CHEST_ITEM;
+    public static final ItemStack SHOP_ITEM;
     public static final Material INGOT = Material.NETHERITE_INGOT;
-    private static final String SHIRE_ID_HEADER = ChatColor.GRAY + "id: ";
+    private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
 
 
     static {
-        CLOUD_CHEST = new ItemStack(Material.CHEST_MINECART);
-        ItemMeta cim = CLOUD_CHEST.getItemMeta();
+        CLOUD_CHEST_ITEM = new ItemStack(Material.CHEST_MINECART);
+        ItemMeta cim = CLOUD_CHEST_ITEM.getItemMeta();
         cim.setDisplayName(ChatColor.YELLOW + "Open Personal Cloud Chest");
         cim.setLore(ImmutableList.of(ChatColor.GRAY + "Access this chest from every Shrine!"));
-        CLOUD_CHEST.setItemMeta(cim);
+        cim.addEnchant(Enchantment.DURABILITY, 1, true);
+        cim.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        CLOUD_CHEST_ITEM.setItemMeta(cim);
+
+        SHOP_ITEM = new ItemStack(Material.EMERALD);
+        ItemMeta sim = SHOP_ITEM.getItemMeta();
+        sim.setDisplayName(ChatColor.YELLOW + "Scroll Shop");
+        sim.addEnchant(Enchantment.DURABILITY, 1, true);
+        sim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
+        SHOP_ITEM.setItemMeta(sim);
     }
 
-    public static ItemStack createShrineItem(String name, int id, int x, int z) throws IllegalArgumentException {
+    public static ItemStack createShrineItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
         ItemStack ret = new ItemStack(INGOT);
         ItemMeta im = ret.getItemMeta();
         if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
-        im.setDisplayName(name);
+        String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
+        im.setDisplayName(color + "Shrine Activator");
         im.setLore(ImmutableList.of(
-                ChatColor.AQUA + "Shrine Activator",
+                color + name,
                 SHIRE_ID_HEADER + id,
-                ChatColor.GRAY + "at " + x + ", " + z
+                ChatColor.DARK_GRAY + "at " + x + ", " + z
         ));
         im.addEnchant(Enchantment.DURABILITY, 1, true);
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -66,14 +76,18 @@ public class ShireInventoryLores {
     }
 
     public static ItemStack createShopItem(int stock) {
-        ItemStack ret = new ItemStack(Material.EMERALD);
+        ItemStack ret = SHOP_ITEM.clone();
         ItemMeta im = ret.getItemMeta();
-        im.setDisplayName(ChatColor.YELLOW + "Scroll Shop");
+        String s;
+        if (stock == -1) {
+            s = "Currently trading";
+        }
+        else {
+            s = stock + " scrolls on stock";
+        }
         im.setLore(ImmutableList.of(
-                ChatColor.GRAY.toString() + stock + " scrolls on stock"
+                ChatColor.GRAY.toString() + s
         ));
-        im.addEnchant(Enchantment.DURABILITY, 1, true);
-        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         ret.setItemMeta(im);
         return ret;
     }

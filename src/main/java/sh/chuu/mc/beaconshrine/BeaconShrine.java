@@ -1,10 +1,7 @@
 package sh.chuu.mc.beaconshrine;
 
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.chuu.mc.beaconshrine.shrine.ShrineEvents;
@@ -47,6 +44,7 @@ public class BeaconShrine extends JavaPlugin {
         } catch (IOException e) {
             getLogger().log(Level.SEVERE, "Could not load Shrine storage", e);
         }
+        getServer().getPluginManager().registerEvents(new LoreItemClickEvents(), this);
 
         if (getConfig().getBoolean(REFRESH_ENABLED_NODE))
             getServer().getPluginManager().registerEvents(refreshChecker = new RefreshChecker(), this);

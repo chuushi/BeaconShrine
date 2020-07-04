@@ -21,7 +21,7 @@ public class CloudInventoryLores {
     static final Material TELEPORT_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
 
     private static final String EXP_VALUE_HEADER = ChatColor.DARK_GRAY + "Total exp: ";
-    private static final String OLD_LOCATION_HEADER = ChatColor.GRAY + "Old location: " ;
+    private static final String OLD_LOCATION_HEADER = ChatColor.GRAY + "Old location: ";
     private static final String RIGHT_CLICK_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Right click to consume";
 
     public static ItemStack createExpItem(Player p) {

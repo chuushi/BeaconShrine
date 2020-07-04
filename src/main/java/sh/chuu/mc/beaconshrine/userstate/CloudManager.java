@@ -3,18 +3,19 @@ package sh.chuu.mc.beaconshrine.userstate;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.*;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
-import sh.chuu.mc.beaconshrine.utils.CloudLoreUtils;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ExperienceUtils;
 
 import java.io.IOException;
@@ -37,10 +38,10 @@ public class CloudManager implements Listener {
     }
 
     public void onDisable() {
-        invs.values().forEach(UserCloud::saveInventory);
         for (Player p : viewing) {
             p.closeInventory();
         }
+        invs.values().forEach(UserCloud::saveInventory);
     }
 
     public boolean savePlayerState(Player p) {
@@ -48,14 +49,14 @@ public class CloudManager implements Listener {
         if (is == null) return false;
 
         int slot = 44;
-        Inventory inv = CloudLoreUtils.getInventory(p, INVENTORY_NAME);
+        Inventory inv = BeaconShireItemUtils.getInventory(p, INVENTORY_NAME);
         ItemStack locRestore = createTeleportationScroll(p.getLocation());
         if (locRestore != null)
             inv.setItem(slot--, locRestore);
         ItemStack expRestore = createExpItem(p);
         if (expRestore != null)
             inv.setItem(slot--, expRestore);
-        inv.setItem(slot--, CloudLoreUtils.createEnderChestItem(p));
+        inv.setItem(slot--, BeaconShireItemUtils.createEnderChestItem(p));
         is.setInventory(inv);
         p.getInventory().clear();
         p.getEnderChest().clear();
