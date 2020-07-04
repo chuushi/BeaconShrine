@@ -96,6 +96,7 @@ public class BeaconShireItemUtils {
             int z = shrine.getZ();
             // TODO make this a timed event
             Location l = p.getLocation();
+            l.setWorld(w);
             l.setX(x + 0.5d);
             l.setY(w.getHighestBlockYAt(x, z) + 30);
             l.setZ(z + 0.5d);
