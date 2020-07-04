@@ -41,8 +41,7 @@ public class ShrineEvents implements Listener {
         // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {
-            if ((item.getType().isBlock() || ev.useItemInHand() == Event.Result.DENY))
-            return;
+            if (ev.useItemInHand() == Event.Result.DENY) return;
             if (item.getType() == INGOT) {
                 ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
                 if (shulker != null) {

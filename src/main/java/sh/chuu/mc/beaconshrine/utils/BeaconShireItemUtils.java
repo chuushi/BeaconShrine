@@ -56,8 +56,8 @@ public class BeaconShireItemUtils {
         im.setDisplayName(color + name + " Warp Scroll");
         im.setLore(ImmutableList.of(
                 ChatColor.GRAY + "Warp to '" + name + "' with this scroll.",
-                USE_IN_HAND_TO_CONSUME,
                 ChatColor.GRAY + "Purchased by " + p.getName(),
+                USE_IN_HAND_TO_CONSUME,
                 WARP_SCROLL_UUID_PREFIX + p.getUniqueId(),
                 WARP_SCROLL_SHRINE_ID_PREFIX + id
         ));
