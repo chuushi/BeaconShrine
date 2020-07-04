@@ -70,7 +70,7 @@ public class ShrineEvents implements Listener {
         }
 
         Block b = ev.getClickedBlock();
-        if (b != null && b.getType().isInteractable()) return;
+        if (b != null && BlockUtils.hasInteraction(b.getType())) return;
 
         ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
         if (shulker == null) return;
