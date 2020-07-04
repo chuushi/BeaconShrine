@@ -32,7 +32,7 @@ import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.useWarpScroll;
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final ShrineManager manager = plugin.getShrineManager();
-    private final BaseComponent[] shrineInitFailText = new BaseComponent[]{new TextComponent("Shrine is not set up properly; run /shrinehelp")};
+    private final BaseComponent shrineInitFailText = new TextComponent("Shrine is not set up properly; run /shrinehelp");
 
     @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
     public void shrineClick(PlayerInteractEvent ev) {

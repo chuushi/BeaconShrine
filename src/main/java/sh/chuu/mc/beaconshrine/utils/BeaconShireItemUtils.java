@@ -32,7 +32,8 @@ public class BeaconShireItemUtils {
     private static final String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";
     private static final String WARP_SCROLL_UUID_PREFIX = ChatColor.DARK_GRAY.toString();
     private static final String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
-    private static final BaseComponent[] INVALID_SHRINE = new BaseComponent[]{new TextComponent("Unable to teleport to the broken shrine")};
+    private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
+    private static final BaseComponent SAME_DIMENSION_REQUIRED = new TextComponent("Shrine is in another dimension");
 
     public static Inventory getInventory(Player p, String name) {
         ItemStack[] im = p.getInventory().getContents();
@@ -94,12 +95,15 @@ public class BeaconShireItemUtils {
             World w = shrine.getWorld();
             int x = shrine.getX();
             int z = shrine.getZ();
-            // TODO make this a timed event
             Location l = p.getLocation();
-            l.setWorld(w);
+            if (w != l.getWorld()) {
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
+                return false;
+            }
             l.setX(x + 0.5d);
             l.setY(w.getHighestBlockYAt(x, z) + 30);
             l.setZ(z + 0.5d);
+            // TODO make this a timed event
             p.teleport(l);
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 200, 0, false, false, false));
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
