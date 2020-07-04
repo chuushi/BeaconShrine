@@ -220,7 +220,6 @@ public class ShrineMultiblock {
             }
             i.setItemMeta(im);
             gui.setItem(index, i);
-            p.getInventory().addItem(i);
         }
     }
 
