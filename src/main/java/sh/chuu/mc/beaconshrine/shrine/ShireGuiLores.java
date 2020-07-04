@@ -17,12 +17,13 @@ public class ShireGuiLores {
     public static final ItemStack CLOUD_CHEST_ITEM;
     public static final ItemStack SHOP_ITEM;
     public static final Material INGOT = Material.NETHERITE_INGOT;
+    static final long RESTOCK_TIMER = 21600000;
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
-
 
     static {
         CLOUD_CHEST_ITEM = new ItemStack(Material.CHEST_MINECART);
         ItemMeta cim = CLOUD_CHEST_ITEM.getItemMeta();
+        //noinspection ConstantConditions Existing item always have ItemMeta
         cim.setDisplayName(ChatColor.YELLOW + "Open Personal Cloud Chest");
         cim.setLore(ImmutableList.of(ChatColor.GRAY + "Access this chest from every Shrine!"));
         cim.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -31,6 +32,7 @@ public class ShireGuiLores {
 
         SHOP_ITEM = new ItemStack(Material.EMERALD);
         ItemMeta sim = SHOP_ITEM.getItemMeta();
+        //noinspection ConstantConditions Existing item always have ItemMeta
         sim.setDisplayName(ChatColor.YELLOW + "Scroll Shop");
         sim.addEnchant(Enchantment.DURABILITY, 1, true);
         sim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
@@ -75,7 +77,7 @@ public class ShireGuiLores {
         }
     }
 
-    public static ItemStack createShopItem(int stock) {
+    public static ItemStack createShopItem(int stock, long restock) {
         ItemStack ret = SHOP_ITEM.clone();
         ItemMeta im = ret.getItemMeta();
         String s;
@@ -85,10 +87,33 @@ public class ShireGuiLores {
         else {
             s = stock + " scrolls on stock";
         }
+        //noinspection ConstantConditions Existing item always have ItemMeta
         im.setLore(ImmutableList.of(
-                ChatColor.GRAY.toString() + s
+                ChatColor.GRAY + s,
+                ChatColor.GRAY + timeLeft(restock)
         ));
         ret.setItemMeta(im);
         return ret;
+    }
+
+    private static final String FULLY_STOCKED = "Fully stocked!";
+    private static String timeLeft(long restock) {
+        if (restock == -1) {
+            return FULLY_STOCKED;
+        }
+        restock = System.currentTimeMillis() - restock;
+        if (restock >= RESTOCK_TIMER) {
+            return FULLY_STOCKED;
+        }
+        restock = RESTOCK_TIMER - restock;
+        if (restock > 3600000) {
+            long ret = (restock/3600000) + 1;
+            return "Restocking in " + ret + " hours";
+        } else if (restock > 60000) {
+            long ret = (restock/60000) + 1;
+            return "Restocking in " + ret + " minutes";
+        } else {
+            return "Restocking in less than a minute";
+        }
     }
 }

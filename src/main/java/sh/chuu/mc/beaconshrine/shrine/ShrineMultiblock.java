@@ -183,12 +183,12 @@ public class ShrineMultiblock {
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
         gui.setItem(1, CLOUD_CHEST_ITEM);
         gui.setItem(4, shulker);
-        gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1));
+        gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
         return gui;
     }
 
     void openMerchant(Player p) {
-        if (System.currentTimeMillis() - firstTradeTime > 21600000) { // 6 hours
+        if (System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) { // 6 hours
             scrollUses = 0;
             firstTradeTime = 0;
         }
