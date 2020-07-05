@@ -10,6 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -34,6 +36,8 @@ public class BeaconShireItemUtils {
     private static final String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
     private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     private static final BaseComponent SAME_DIMENSION_REQUIRED = new TextComponent("Shrine is in another dimension");
+    private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
+
 
     public static Inventory getInventory(Player p, String name) {
         ItemStack[] im = p.getInventory().getContents();
@@ -101,11 +105,27 @@ public class BeaconShireItemUtils {
                 return false;
             }
             l.setX(x + 0.5d);
-            l.setY(w.getHighestBlockYAt(x, z) + 30);
+            boolean isNether = w.getEnvironment() == World.Environment.NETHER;
+            if (isNether) {
+                Block b = w.getBlockAt(x, shrine.getShulkerY() + 2, z);
+                int air = 8;
+                while (b.getY() < 124 && air != 0) {
+                    if (b.isPassable()) air--;
+                    else air = Math.max(air, 3);
+                    b = b.getRelative(BlockFace.UP);
+                }
+                if (b.getY() == 124) {
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
+                    return false;
+                }
+                l.setY(b.getY());
+            } else {
+                l.setY(w.getHighestBlockYAt(x, z) + 30);
+            }
             l.setZ(z + 0.5d);
             // TODO make this a timed event
             p.teleport(l);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 200, 0, false, false, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
             return true;
         } else {

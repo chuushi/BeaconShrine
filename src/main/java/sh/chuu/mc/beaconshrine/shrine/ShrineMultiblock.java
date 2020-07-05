@@ -168,6 +168,10 @@ public class ShrineMultiblock {
         return x;
     }
 
+    public int getShulkerY() {
+        return shulkerY;
+    }
+
     public int getZ() {
         return z;
     }
