@@ -104,6 +104,14 @@ public class ShrineEvents implements Listener {
         if (id == -1 || inv == null || inv.getType() == InventoryType.MERCHANT)
             return;
 
+        if (ev.getClick().isShiftClick()) {
+            ev.setCancelled(true);
+            return;
+        }
+
+        if (inv != ev.getView().getTopInventory())
+            return;
+
         ev.setCancelled(true);
         ItemStack item = ev.getCurrentItem();
         if (item == null)
