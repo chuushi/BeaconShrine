@@ -25,8 +25,8 @@ import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.INGOT;
-import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.getShrineId;
+import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.INGOT;
+import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.getShrineId;
 import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.useWarpScroll;
 
 public class ShrineEvents implements Listener {
@@ -101,7 +101,7 @@ public class ShrineEvents implements Listener {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
         int id = manager.getGuiViewingId(he);
-        if (id == -1 || inv != ev.getView().getTopInventory() || inv.getType() == InventoryType.MERCHANT)
+        if (id == -1 || inv == null || inv.getType() == InventoryType.MERCHANT)
             return;
 
         ev.setCancelled(true);

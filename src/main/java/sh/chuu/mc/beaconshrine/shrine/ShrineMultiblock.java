@@ -27,7 +27,7 @@ import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import java.util.Iterator;
 import java.util.List;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.*;
+import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
 
 public class ShrineMultiblock {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -92,6 +92,10 @@ public class ShrineMultiblock {
         this.scrollUses = 0;
 
         setShulker(w, x, z, shulkerY, name, color);
+    }
+
+    public ItemStack createShireItem() {
+        return createShrineItem(name, cc, id, x, z);
     }
 
     int distanceSquaredXZ(int x, int z) {
@@ -263,6 +267,6 @@ public class ShrineMultiblock {
     }
 
     void putShrineItem() {
-        getInventory().addItem(createShrineItem(name, cc, id, x, z));
+        getInventory().addItem(createShireItem());
     }
 }

@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ShireGuiLores {
+public class ShrineGuiLores {
     public static final ItemStack CLOUD_CHEST_ITEM;
     public static final ItemStack SHOP_ITEM;
     public static final ItemStack ENDER_CHEST_ITEM;

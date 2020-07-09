@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShireGuiLores.*;
+import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
 
 public class ShrineManager {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -49,11 +49,23 @@ public class ShrineManager {
         saveData();
     }
 
+    public int getNextId() {
+        return nextId;
+    }
+
     ShrineMultiblock newShrine(ShulkerBox s, Beacon b) {
         ShrineMultiblock ret = new ShrineMultiblock(nextId, s, b, s.getType() != Material.SHULKER_BOX);
         shrines.put(nextId, ret);
         nextId++;
         return ret;
+    }
+
+    public boolean removeShrine(int id) {
+        ShrineMultiblock s = shrines.remove(id);
+        if (s == null || s.isValid()) return false;
+        if (nextId == id + 1) nextId--;
+        config.set("s" + id, null);
+        return true;
     }
 
     boolean openShrineGui(Player p, int id) {
@@ -147,7 +159,6 @@ public class ShrineManager {
             ConfigurationSection cs = config.getConfigurationSection(section);
             if (cs == null) cs = config.createSection(section);
             is.getValue().save(cs);
-
         }
         try {
             config.save(configFile);

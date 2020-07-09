@@ -62,6 +62,7 @@ public class BlockUtils {
     public static Material getShulkerBoxFromDyeColor(DyeColor color) {
         if (color == null) return Material.SHULKER_BOX;
         switch (color) {
+            // <editor-fold defaultstate="collapsed" desc="shulkerBoxFromDyeColor">
             case WHITE:
                 return Material.WHITE_SHULKER_BOX;
             case ORANGE:
@@ -94,6 +95,7 @@ public class BlockUtils {
                 return Material.RED_SHULKER_BOX;
             case BLACK:
                 return Material.BLACK_SHULKER_BOX;
+            // </editor-fold>
         }
         return Material.SHULKER_BOX;
     }
