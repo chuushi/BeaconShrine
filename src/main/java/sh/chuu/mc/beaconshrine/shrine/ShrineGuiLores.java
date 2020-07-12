@@ -21,7 +21,7 @@ public class ShrineGuiLores {
     public static final Material SHOP_ITEM_TYPE = Material.EMERALD;
     public static final Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
     public static final Material INGOT = Material.NETHERITE_INGOT;
-    static final long RESTOCK_TIMER = 21600000;
+    static final long RESTOCK_TIMER = 21600000; // 6 hours
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
 
     static {

@@ -232,7 +232,7 @@ public class ShrineMultiblock {
     }
 
     void openMerchant(Player p) {
-        if (System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) { // 6 hours
+        if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) { // 6 hours
             scrollUses = 0;
             firstTradeTime = 0;
         }

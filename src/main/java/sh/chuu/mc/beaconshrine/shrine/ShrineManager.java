@@ -128,7 +128,7 @@ public class ShrineManager {
     }
 
     ShrineMultiblock updateShrine(int id, ShulkerBox s) {
-        if (id < 0 || s.getCustomName() == null)
+        if (id == -1 || s.getCustomName() == null)
             return null;
         ShrineMultiblock shrine = shrines.get(id);
         if (shrine == null) return null;

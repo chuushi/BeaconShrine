@@ -55,14 +55,12 @@ public class ShrineEvents implements Listener {
 
                         ShrineMultiblock shrine;
                         int id = getShrineId(item);
-                        if (id == -1) {
+                        if ((shrine = manager.updateShrine(id, shulker)) == null) {
                             shrine = manager.newShrine(shulker, null);
-                        } else {
-                            shrine = manager.updateShrine(id, shulker);
                         }
+                        ev.setCancelled(true);
                         item.setAmount(item.getAmount() - 1);
                         shrine.putShrineItem();
-                        ev.setCancelled(true);
                         return;
                     }
                 }
