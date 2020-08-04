@@ -16,6 +16,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -42,7 +43,7 @@ public class ShrineEvents implements Listener {
         ItemStack item = ev.getItem();
         if (item != null) {
             if (ev.useItemInHand() == Event.Result.DENY) return;
-            if (item.getType() == INGOT) {
+            if (item.getType() == INGOT_ITEM_TYPE) {
                 ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
                 if (shulker != null) {
                     Inventory inv = shulker.getInventory();
@@ -113,7 +114,7 @@ public class ShrineEvents implements Listener {
         if (item == null)
             return;
 
-        if (item.getType() == WARP_LIST_ITEM_TYPE) {
+        if (item.getType() == WARP_SCROLL_ITEM_TYPE) {
             if (ev.isRightClick()) {
                 int clickId = getWarpScrollGuiId(item);
                 if (clickId != -1) {
@@ -127,8 +128,33 @@ public class ShrineEvents implements Listener {
     }
 
     @EventHandler
+    public void guiDrag(InventoryDragEvent ev) {
+        HumanEntity he = ev.getWhoClicked();
+        Inventory inv = ev.getView().getTopInventory();
+        int id = manager.getGuiViewingId(he);
+        if (id == -1 || inv.getType() == InventoryType.MERCHANT)
+            return;
+
+        int topSize = inv.getSize();
+        for (int slot : ev.getRawSlots()) {
+            if (slot < topSize) {
+                ev.setCancelled(true);
+                break;
+            }
+        }
+    }
+
+    @EventHandler
     public void guiClose(InventoryCloseEvent ev) {
-        manager.closeShrineGui(ev.getPlayer());
+        if (manager.closeShrineGui(ev.getPlayer())) return;
+
+        Inventory inv = ev.getInventory();
+        if (inv.getType() == InventoryType.SHULKER_BOX) {
+            int id = getShrineId(inv);
+            if (id == -1) return;
+
+            manager.getShrine(id).updateSymbolItemType(inv);
+        }
     }
 
     private ShulkerBox getValidShulkerNear(Block center, int tier) {

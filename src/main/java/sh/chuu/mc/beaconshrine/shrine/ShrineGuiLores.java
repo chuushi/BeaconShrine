@@ -21,9 +21,9 @@ public class ShrineGuiLores {
     public static final Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
     public static final Material SHOP_ITEM_TYPE = Material.EMERALD;
     public static final Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
-    public static final Material WARP_LIST_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
+    public static final Material WARP_LIST_ITEM_TYPE = Material.SKULL_BANNER_PATTERN;
     public static final Material WARP_SCROLL_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
-    public static final Material INGOT = Material.NETHERITE_INGOT;
+    public static final Material INGOT_ITEM_TYPE = Material.NETHERITE_INGOT;
     static final long RESTOCK_TIMER = 7200000; // 2 hours
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
 
@@ -39,7 +39,7 @@ public class ShrineGuiLores {
 
         WARP_LIST_ITEM = createGuiItem("Warp to...",
                 WARP_LIST_ITEM_TYPE,
-                ImmutableList.of(ChatColor.GRAY + "Warp to any synced shrines"),
+                ImmutableList.of(ChatColor.GRAY + "Warp to any tuned shrines"),
                 true);
         // TODO change item and meta, and add gui event to this
     }
@@ -59,7 +59,7 @@ public class ShrineGuiLores {
     }
 
     public static ItemStack createShrineActivatorItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
-        ItemStack ret = new ItemStack(INGOT);
+        ItemStack ret = new ItemStack(INGOT_ITEM_TYPE);
         ItemMeta im = ret.getItemMeta();
         if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
@@ -105,7 +105,7 @@ public class ShrineGuiLores {
     }
 
     public static int getShrineId(Inventory inventory) {
-        HashMap<Integer, ? extends ItemStack> ingots = inventory.all(INGOT);
+        HashMap<Integer, ? extends ItemStack> ingots = inventory.all(INGOT_ITEM_TYPE);
         for (Map.Entry<Integer, ? extends ItemStack> e : ingots.entrySet()) {
             int itemId = getShrineId(e.getValue());
             if (itemId != -1) return itemId;

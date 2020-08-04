@@ -106,10 +106,12 @@ public class ShrineManager {
                 if (x != l.getX() || y != l.getY() || z != l.getZ() || !shrine.isValid()) {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuning cancelled due to movement or invalid shrine").create());
+                    attuning.remove(p);
                     this.cancel();
                     return;
                 }
                 if (timer == 0) {
+                    attuning.remove(p);
                     this.cancel();
                     plugin.getCloudManager().attuneShrine(p, id);
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
@@ -119,7 +121,7 @@ public class ShrineManager {
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                         new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + timer + (timer-- == 1 ? " second" : " seconds")).create());
             }
-        }.runTaskTimerAsynchronously(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 
     Inventory getWarpGui(Player p, int currentId) {
@@ -149,11 +151,14 @@ public class ShrineManager {
         return ret;
     }
 
-    void closeShrineGui(HumanEntity p) {
+    boolean closeShrineGui(HumanEntity p) {
         //noinspection SuspiciousMethodCalls
         ShrineMultiblock shrine = viewing.remove(p);
-        if (shrine != null)
+        if (shrine != null) {
             shrine.closeMerchant((Player) p);
+            return false;
+        }
+        return true;
     }
 
     int getGuiViewingId(HumanEntity p) {

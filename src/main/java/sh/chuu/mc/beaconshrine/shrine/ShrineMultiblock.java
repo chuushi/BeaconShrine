@@ -42,6 +42,7 @@ public class ShrineMultiblock {
     private int beaconY;
     private DyeColor color;
     private ChatColor cc;
+    private Material symbolItemType;
     private long firstTradeTime;
     private int scrollUses;
     private int scrollMax;
@@ -56,14 +57,15 @@ public class ShrineMultiblock {
      * @param beacon
      */
     ShrineMultiblock(int id, ShulkerBox shulker, Beacon beacon, boolean dyed) {
-        this(id,
-                shulker.getWorld(),
-                shulker.getX(),
-                shulker.getZ(),
-                shulker.getY(),
-                beacon == null ? -1 : beacon.getY(),
-                shulker.getCustomName(),
-                dyed ? shulker.getColor() : null);
+        this.id = id;
+        this.beaconY = beacon == null ? -1 : beacon.getY();
+        this.firstTradeTime = 0;
+        this.scrollMax = 3;
+        this.scrollUses = 0;
+
+        DyeColor color = dyed ? shulker.getColor() : null;
+        setShulker(shulker.getWorld(), shulker.getX(), shulker.getZ(), shulker.getY(), shulker.getCustomName(), color);
+        setSymbolItemType(shulker.getInventory());
     }
 
     ShrineMultiblock(int id, ConfigurationSection cs) {
@@ -84,16 +86,8 @@ public class ShrineMultiblock {
         this.beaconY = loc.next();
 
         setShulker(w, x, z, shulkerY, name, color);
-    }
-
-    private ShrineMultiblock(int id, World w, int x, int z, int shulkerY, int beaconY, String name, DyeColor color) {
-        this.id = id;
-        this.beaconY = beaconY;
-        this.firstTradeTime = 0;
-        this.scrollMax = 3;
-        this.scrollUses = 0;
-
-        setShulker(w, x, z, shulkerY, name, color);
+        String symIT = cs.getString("symIT");
+        this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
     }
 
     public ItemStack createShireActivatorItem() {
@@ -111,7 +105,7 @@ public class ShrineMultiblock {
         this.beaconY = -1;
     }
 
-    void setShulker(World w, int x, int z, int shulkerY, String name, DyeColor color) {
+    private void setShulker(World w, int x, int z, int shulkerY, String name, DyeColor color) {
         this.w = w;
         this.x = x;
         this.z = z;
@@ -119,6 +113,19 @@ public class ShrineMultiblock {
         this.color = color;
         this.cc = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
         this.shulkerY = shulkerY;
+    }
+
+    public void updateSymbolItemType(Inventory inv) {
+        setSymbolItemType(inv);
+    }
+
+    private void setSymbolItemType(Inventory inv) {
+        for (ItemStack item : inv) {
+            if (item != null && item.getType() == INGOT_ITEM_TYPE && ShrineGuiLores.getShrineId(item) != -1)
+                continue;
+            this.symbolItemType = item.getType();
+            break;
+        }
     }
 
     /**
