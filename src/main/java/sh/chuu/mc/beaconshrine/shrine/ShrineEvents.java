@@ -3,6 +3,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -106,23 +107,37 @@ public class ShrineEvents implements Listener {
             return;
         }
 
-        if (inv != ev.getView().getTopInventory())
-            return;
-
-        ev.setCancelled(true);
         ItemStack item = ev.getCurrentItem();
-        if (item == null)
-            return;
+        boolean isTopInv = inv == ev.getView().getTopInventory();
 
         if (gui.type == ShrineManager.GuiType.WARP_LIST) {
-            if (ev.isRightClick()) {
+            if (ev.isRightClick() && isTopInv) {
+                ev.setCancelled(true);
                 int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
                     warpToShrine((Player) he, clickId);
                 }
+                return;
+            }
+            // yes no none
+            // t   f  t
+            // f   t  t
+
+            ItemStack cursor = ev.getView().getCursor();
+            if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
+            if (cursor != null) {
+                boolean isWarpOnCursor = isWarpGui(cursor);
+                plugin.getLogger().info(isTopInv + ", " + isWarpOnCursor);
+                if (isTopInv ^ isWarpOnCursor) {
+                    ev.setCancelled(true);
+                }
             }
             return;
         }
+
+        if (!isTopInv) return;
+        ev.setCancelled(true);
+        if (item == null) return;
 
         if (gui.type == ShrineManager.GuiType.HOME) {
             manager.clickedGui(gui.shrine.getId(), item, (Player) he);
@@ -137,6 +152,11 @@ public class ShrineEvents implements Listener {
         if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
             return;
 
+        if (gui.type == ShrineManager.GuiType.WARP_LIST) {
+            ev.setCancelled(true);
+            return;
+        }
+
         int topSize = inv.getSize();
         for (int slot : ev.getRawSlots()) {
             if (slot < topSize) {
@@ -148,9 +168,18 @@ public class ShrineEvents implements Listener {
 
     @EventHandler
     public void guiClose(InventoryCloseEvent ev) {
-        if (manager.closeShrineGui(ev.getPlayer())) return;
-
+        ShrineManager.GuiView gui = manager.closeShrineGui(ev.getPlayer());
         Inventory inv = ev.getInventory();
+
+        if (gui != null) {
+            // TODO Clear id list of player's ids
+            if (gui.type == ShrineManager.GuiType.WARP_LIST) {
+                // TODO set list of player's ids get order of IDs in "inv" (remember to account for "you are here")
+                // TODO account for the item that may have been on the hand
+            }
+            return;
+        }
+
         if (inv.getType() == InventoryType.SHULKER_BOX) {
             int id = getShrineId(inv);
             if (id == -1) return;

@@ -158,15 +158,15 @@ public class ShrineManager {
         return ret;
     }
 
-    boolean closeShrineGui(HumanEntity p) {
+    GuiView closeShrineGui(HumanEntity p) {
         @SuppressWarnings("SuspiciousMethodCalls")
         GuiView gui = whichGui.remove(p);
         if (gui == null)
-            return false;
+            return null;
         if (gui.type == GuiType.SHOP) {
             gui.shrine.closeMerchant((Player) p);
         }
-        return true;
+        return gui;
     }
 
     GuiView getGuiView(HumanEntity p) {

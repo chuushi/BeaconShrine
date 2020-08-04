@@ -26,6 +26,7 @@ public class ShrineGuiLores {
     public static final Material INGOT_ITEM_TYPE = Material.NETHERITE_INGOT;
     static final long RESTOCK_TIMER = 7200000; // 2 hours
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
+    private static final String SHIRE_YOU_ARE_HERE = ChatColor.GRAY + "You are here";
 
     static {
         CLOUD_CHEST_ITEM = createGuiItem("Open Personal Cloud Chest",
@@ -82,7 +83,7 @@ public class ShrineGuiLores {
         //noinspection ConstantConditions meta always exists
         im.setDisplayName(ChatColor.YELLOW + "Warp to: " + color + name);
         if (urHere) {
-            im.setLore(ImmutableList.of(ChatColor.GRAY + "You are here"));
+            im.setLore(ImmutableList.of(SHIRE_YOU_ARE_HERE));
         } else {
             im.setLore(ImmutableList.of(SHIRE_ID_HEADER + id));
             im.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -92,7 +93,23 @@ public class ShrineGuiLores {
         return ret;
     }
 
+    public static boolean isWarpGui(ItemStack item) {
+        ItemMeta im = item.getItemMeta();
+        if (im != null && im.hasLore()) {
+            List<String> l = im.getLore();
+            if (l.size() == 0) return false;
+            try {
+                String line1 = l.get(0);
+                return line1.equals(SHIRE_YOU_ARE_HERE) || line1.startsWith(SHIRE_ID_HEADER);
+            } catch (NumberFormatException ex) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     public static int getWarpIdGui(ItemStack item) {
+        if (item == null) return -1;
         ItemMeta im = item.getItemMeta();
         if (im.hasLore()) {
             List<String> l = im.getLore();
