@@ -292,6 +292,7 @@ public class ShrineMultiblock {
         cs.set("world", w.getName());
         cs.set("loc", new int[]{x, z, shulkerY, beaconY});
         cs.set("scTime", firstTradeTime);
+        cs.set("symIT", symbolItemType == null ? null : symbolItemType.name());
         cs.set("scMax", scrollMax);
         cs.set("scUses", scrollUses);
         cs.set("scPurch", scrollTotalPurchases);
