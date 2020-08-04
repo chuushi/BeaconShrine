@@ -97,8 +97,8 @@ public class ShrineEvents implements Listener {
     public void guiClick(InventoryClickEvent ev) {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
-        int id = manager.getGuiViewingId(he);
-        if (id == -1 || inv == null || inv.getType() == InventoryType.MERCHANT)
+        ShrineManager.GuiView gui = manager.getGuiView(he);
+        if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
             return;
 
         if (ev.getClick().isShiftClick()) {
@@ -114,9 +114,9 @@ public class ShrineEvents implements Listener {
         if (item == null)
             return;
 
-        if (item.getType() == WARP_SCROLL_ITEM_TYPE) {
+        if (gui.type == ShrineManager.GuiType.WARP_LIST) {
             if (ev.isRightClick()) {
-                int clickId = getWarpScrollGuiId(item);
+                int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
                     warpToShrine((Player) he, clickId);
                 }
@@ -124,15 +124,17 @@ public class ShrineEvents implements Listener {
             return;
         }
 
-        manager.clickedGui(id, item, (Player) he);
+        if (gui.type == ShrineManager.GuiType.HOME) {
+            manager.clickedGui(gui.shrine.getId(), item, (Player) he);
+        }
     }
 
     @EventHandler
     public void guiDrag(InventoryDragEvent ev) {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getView().getTopInventory();
-        int id = manager.getGuiViewingId(he);
-        if (id == -1 || inv.getType() == InventoryType.MERCHANT)
+        ShrineManager.GuiView gui = manager.getGuiView(he);
+        if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
             return;
 
         int topSize = inv.getSize();

@@ -19,9 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
-import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +33,24 @@ public class ShrineManager {
     private final File configFile;
     private final YamlConfiguration config;
     private final Map<Integer, ShrineMultiblock> shrines = new HashMap<>();
-    private final Map<Player, ShrineMultiblock> viewing = new LinkedHashMap<>();
+    private final Map<Player, GuiView> whichGui = new LinkedHashMap<>();
     private final Set<Player> attuning = new LinkedHashSet<>();
     private int nextId = 0;
+
+    static class GuiView {
+        final ShrineMultiblock shrine;
+        final GuiType type;
+
+        private GuiView(ShrineMultiblock shrine, GuiType type) {
+            this.shrine = shrine;
+            this.type = type;
+        }
+    }
+
+    enum GuiType {
+        HOME, SHOP, WARP_LIST;
+        // TODO add GUI types + Link it with shrine ID stuffs
+    }
 
     public ShrineManager() throws IOException{
         this.configFile = new File(plugin.getDataFolder(), "shrines.yml");
@@ -49,7 +62,7 @@ public class ShrineManager {
     }
 
     public void onDisable() {
-        for (Map.Entry<Player, ShrineMultiblock> e : viewing.entrySet()) {
+        for (Map.Entry<Player, GuiView> e : whichGui.entrySet()) {
             Player p = e.getKey();
             closeShrineGui(p);
             p.closeInventory();
@@ -85,7 +98,7 @@ public class ShrineManager {
         ShrineMultiblock s = shrines.get(id);
         if (s == null || !s.isValid()) return false;
         p.openInventory(s.getGui(p));
-        viewing.put(p, s);
+        whichGui.put(p, new GuiView(s, GuiType.HOME));
         return true;
     }
 
@@ -139,32 +152,26 @@ public class ShrineManager {
             int id = wids.get(i);
 
             ShrineMultiblock sm = shrines.get(id);
-            ItemStack item = sm.createWarpScrollGuiItem();
-            if (id == currentId) {
-                ItemMeta im = item.getItemMeta();
-                //noinspection ConstantConditions if ws exists, im also exists
-                im.setLore(ImmutableList.of(ChatColor.GRAY + "You are here"));
-                item.setItemMeta(im);
-            }
+            ItemStack item = sm.createWarpScrollGuiItem(id == currentId);
             ret.setItem(i, item);
         }
         return ret;
     }
 
     boolean closeShrineGui(HumanEntity p) {
-        //noinspection SuspiciousMethodCalls
-        ShrineMultiblock shrine = viewing.remove(p);
-        if (shrine != null) {
-            shrine.closeMerchant((Player) p);
+        @SuppressWarnings("SuspiciousMethodCalls")
+        GuiView gui = whichGui.remove(p);
+        if (gui == null)
             return false;
+        if (gui.type == GuiType.SHOP) {
+            gui.shrine.closeMerchant((Player) p);
         }
         return true;
     }
 
-    int getGuiViewingId(HumanEntity p) {
+    GuiView getGuiView(HumanEntity p) {
         //noinspection SuspiciousMethodCalls
-        ShrineMultiblock n = viewing.get(p);
-        return n == null ? -1 : n.getId();
+        return whichGui.get(p);
     }
 
     public void clickedGui(int id, ItemStack slot, Player p) {
@@ -179,7 +186,7 @@ public class ShrineManager {
             ShrineMultiblock shrine = shrines.get(id);
             p.closeInventory();
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                viewing.put(p, shrine);
+                whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
                 p.openInventory(getWarpGui(p, id));
             }, 1L);
             return;
@@ -198,7 +205,7 @@ public class ShrineManager {
             }
             p.closeInventory();
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                viewing.put(p, shrine);
+                whichGui.put(p, new GuiView(shrine, GuiType.SHOP));
                 shrine.openMerchant(p);
             }, 1L);
             return;

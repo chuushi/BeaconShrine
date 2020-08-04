@@ -121,11 +121,12 @@ public class ShrineMultiblock {
 
     private void setSymbolItemType(Inventory inv) {
         for (ItemStack item : inv) {
-            if (item != null && item.getType() == INGOT_ITEM_TYPE && ShrineGuiLores.getShrineId(item) != -1)
+            if (item == null || item.getType() == INGOT_ITEM_TYPE && ShrineGuiLores.getShrineId(item) != -1)
                 continue;
             this.symbolItemType = item.getType();
-            break;
+            return;
         }
+        this.symbolItemType = null;
     }
 
     /**
@@ -281,8 +282,8 @@ public class ShrineMultiblock {
         return BeaconShireItemUtils.createWarpScroll(id, name, cc, p);
     }
 
-    ItemStack createWarpScrollGuiItem() {
-        return ShrineGuiLores.createWarpScrollGui(id, name, cc);
+    ItemStack createWarpScrollGuiItem(boolean urHere) {
+        return ShrineGuiLores.createWarpGui(id, name, symbolItemType, cc, urHere);
     }
 
     void save(ConfigurationSection cs) {

@@ -75,22 +75,24 @@ public class ShrineGuiLores {
         return ret;
     }
 
-    public static ItemStack createWarpScrollGui(int id, String name, ChatColor cc) {
-        ItemStack ret = new ItemStack(WARP_SCROLL_ITEM_TYPE);
+    public static ItemStack createWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
+        ItemStack ret = new ItemStack(symbol == null ? WARP_LIST_ITEM_TYPE : symbol);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
+        //noinspection ConstantConditions meta always exists
         im.setDisplayName(ChatColor.YELLOW + "Warp to: " + color + name);
-        im.setLore(ImmutableList.of(
-                SHIRE_ID_HEADER + id
-        ));
-        im.addEnchant(Enchantment.DURABILITY, 1, true);
-        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS);
+        if (urHere) {
+            im.setLore(ImmutableList.of(ChatColor.GRAY + "You are here"));
+        } else {
+            im.setLore(ImmutableList.of(SHIRE_ID_HEADER + id));
+            im.addEnchant(Enchantment.DURABILITY, 1, true);
+        }
+        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_ATTRIBUTES);
         ret.setItemMeta(im);
         return ret;
     }
 
-    public static int getWarpScrollGuiId(ItemStack item) {
-        if (item.getType() != WARP_SCROLL_ITEM_TYPE) return -1;
+    public static int getWarpIdGui(ItemStack item) {
         ItemMeta im = item.getItemMeta();
         if (im.hasLore()) {
             List<String> l = im.getLore();
