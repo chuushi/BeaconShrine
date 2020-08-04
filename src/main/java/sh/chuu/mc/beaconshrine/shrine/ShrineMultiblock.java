@@ -45,6 +45,7 @@ public class ShrineMultiblock {
     private long firstTradeTime;
     private int scrollUses;
     private int scrollMax;
+    private int scrollTotalPurchases;
     private Player trader = null;
     private Merchant merchant = null;
 
@@ -70,6 +71,7 @@ public class ShrineMultiblock {
         this.firstTradeTime = cs.getLong("scTime", 0);
         this.scrollMax = cs.getInt("scMax", 3);
         this.scrollUses = cs.getInt("scUses", 0);
+        this.scrollTotalPurchases = cs.getInt("scPurch", 0);
 
         String name = cs.getString("name");
         String colorStr = cs.getString("color");
@@ -94,8 +96,8 @@ public class ShrineMultiblock {
         setShulker(w, x, z, shulkerY, name, color);
     }
 
-    public ItemStack createShireItem() {
-        return createShrineItem(name, cc, id, x, z);
+    public ItemStack createShireActivatorItem() {
+        return createShrineActivatorItem(name, cc, id, x, z);
     }
 
     int distanceSquaredXZ(int x, int z) {
@@ -180,6 +182,10 @@ public class ShrineMultiblock {
         return z;
     }
 
+    public String getName() {
+        return name;
+    }
+
     Inventory getInventory() {
         BlockState state = w.getBlockAt(x, shulkerY, z).getState();
         return state instanceof ShulkerBox ? ((ShulkerBox) state).getInventory() : null;
@@ -199,15 +205,16 @@ public class ShrineMultiblock {
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
         gui.setItem(0, shulker);
         gui.setItem(2, CLOUD_CHEST_ITEM);
+        gui.setItem(4, WARP_LIST_ITEM);
         gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
         if (hasEnderChest) gui.setItem(1, ENDER_CHEST_ITEM);
-        ItemStack[] c = plugin.getCloudManager().getInventoryContents(p);
-        if (c != null && c.length == 45) {
-            // set non-consuming teleportation
-            setQuickTeleportItem(gui, 3, p, c[42]);
-            setQuickTeleportItem(gui, 4, p, c[43]);
-            setQuickTeleportItem(gui, 5, p, c[44]);
-        }
+//        ItemStack[] c = plugin.getCloudManager().getInventoryContents(p);
+//        if (c != null && c.length == 45) {
+//            // set non-consuming teleportation
+//            setQuickTeleportItem(gui, 3, p, c[42]);
+//            setQuickTeleportItem(gui, 4, p, c[43]);
+//            setQuickTeleportItem(gui, 5, p, c[44]);
+//        }
         return gui;
     }
 
@@ -232,16 +239,22 @@ public class ShrineMultiblock {
     }
 
     void openMerchant(Player p) {
-        if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) { // 6 hours
+        if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) {
             scrollUses = 0;
             firstTradeTime = 0;
+            // Incrase max based on this curve
+            scrollMax = 1 + ((int) Math.sqrt(scrollTotalPurchases + 1)) * 2;
         }
 
         merchant = Bukkit.createMerchant(name + " Scroll Shop");
         trader = p;
-        MerchantRecipe recipe = new MerchantRecipe(BeaconShireItemUtils.createWarpScroll(id, name, cc, p), scrollUses, scrollMax, false);
-        recipe.addIngredient(new ItemStack(Material.NETHERITE_SCRAP));
-        merchant.setRecipes(ImmutableList.of(recipe));
+        MerchantRecipe recipe = new MerchantRecipe(createShireWarpItem(p), scrollUses, scrollMax, false);
+        recipe.addIngredient(new ItemStack(Material.DIAMOND, 2));
+        if (true) {
+            merchant.setRecipes(ImmutableList.of(recipe));
+        } else {
+            merchant.setRecipes(ImmutableList.of(recipe));
+        }
         p.openMerchant(merchant, true);
     }
 
@@ -250,10 +263,19 @@ public class ShrineMultiblock {
         int uses = merchant.getRecipe(0).getUses();
         if (uses != scrollUses) {
             if (firstTradeTime == 0) firstTradeTime = System.currentTimeMillis();
+            scrollTotalPurchases += uses - scrollUses;
             scrollUses = uses;
         }
         trader = null;
         merchant = null;
+    }
+
+    private ItemStack createShireWarpItem(Player p) {
+        return BeaconShireItemUtils.createWarpScroll(id, name, cc, p);
+    }
+
+    ItemStack createWarpScrollGuiItem() {
+        return ShrineGuiLores.createWarpScrollGui(id, name, cc);
     }
 
     void save(ConfigurationSection cs) {
@@ -264,9 +286,10 @@ public class ShrineMultiblock {
         cs.set("scTime", firstTradeTime);
         cs.set("scMax", scrollMax);
         cs.set("scUses", scrollUses);
+        cs.set("scPurch", scrollTotalPurchases);
     }
 
     void putShrineItem() {
-        getInventory().addItem(createShireItem());
+        getInventory().addItem(createShireActivatorItem());
     }
 }

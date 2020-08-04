@@ -187,7 +187,7 @@ public class BeaconShrine extends JavaPlugin {
                 if (s == null) {
                     sender.sendMessage("This Shrine does not exist");
                 } else {
-                    ((Player) sender).getInventory().addItem(s.createShireItem());
+                    ((Player) sender).getInventory().addItem(s.createShireActivatorItem());
                     sender.sendMessage("Item created");
                     return true;
                 }

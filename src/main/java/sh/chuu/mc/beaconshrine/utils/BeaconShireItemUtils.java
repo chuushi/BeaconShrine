@@ -39,7 +39,7 @@ public class BeaconShireItemUtils {
     private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
 
 
-    public static Inventory getInventory(Player p, String name) {
+    public static Inventory copyPlayerInventory(Player p, String name) {
         ItemStack[] im = p.getInventory().getContents();
         Inventory inv = Bukkit.createInventory(null, 45, name);
         for (int i = 0; i < im.length; i++) {
@@ -49,7 +49,7 @@ public class BeaconShireItemUtils {
         return inv;
     }
 
-    public static ItemStack createEnderChestItem(Player p) {
+    public static ItemStack copyEnderChestToShulkerBox(Player p) {
         ItemStack[] ender = p.getEnderChest().getContents();
         ItemStack item = new ItemStack(Material.GREEN_SHULKER_BOX);
 
@@ -93,8 +93,8 @@ public class BeaconShireItemUtils {
                 UUID.fromString(lore.get(3).substring(WARP_SCROLL_UUID_PREFIX.length())));
     }
 
-    public static boolean useWarpScroll(Player p, WarpScroll ws) {
-        ShrineMultiblock shrine = BeaconShrine.getInstance().getShrineManager().getShrine(ws.id);
+    public static boolean warpToShrine(Player p, int id) {
+        ShrineMultiblock shrine = BeaconShrine.getInstance().getShrineManager().getShrine(id);
         if (shrine.isValid()) {
             World w = shrine.getWorld();
             int x = shrine.getX();

@@ -22,6 +22,7 @@ import sh.chuu.mc.beaconshrine.utils.ExperienceUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -42,7 +43,7 @@ public class CloudManager implements Listener {
         for (Player p : viewing) {
             p.closeInventory();
         }
-        invs.values().forEach(UserCloud::saveInventory);
+        invs.values().forEach(UserCloud::save);
     }
 
     public boolean savePlayerState(Player p) {
@@ -50,14 +51,14 @@ public class CloudManager implements Listener {
         if (is == null) return false;
 
         int slot = 44;
-        Inventory inv = BeaconShireItemUtils.getInventory(p, INVENTORY_NAME);
+        Inventory inv = BeaconShireItemUtils.copyPlayerInventory(p, INVENTORY_NAME);
         ItemStack locRestore = createTeleportationScroll(p.getLocation());
         inv.setItem(slot--, locRestore);
         ItemStack expRestore = createExpItem(p);
         if (expRestore != null)
             inv.setItem(slot--, expRestore);
         // update below to slot-- when we need to add more items
-        inv.setItem(slot, BeaconShireItemUtils.createEnderChestItem(p));
+        inv.setItem(slot, BeaconShireItemUtils.copyEnderChestToShulkerBox(p));
         is.setInventory(inv);
         p.getInventory().clear();
         p.getEnderChest().clear();
@@ -74,6 +75,24 @@ public class CloudManager implements Listener {
         if (is == null)
             return null;
         return is.getInventory().getContents();
+    }
+
+    public boolean isTunedWithShrine(Player p, int id) {
+        UserCloud is = invs.get(p);
+        if (is == null) return false;
+        return is.isTunedWithShrine(id);
+    }
+
+    public boolean attuneShrine(Player p, int id) {
+        UserCloud is = invs.get(p);
+        if (is == null) return false;
+        return is.attuneShrine(id);
+    }
+
+    public List<Integer> getTunedShrineList(Player p) {
+        UserCloud is = invs.get(p);
+        if (is == null) return null;
+        return is.getTunedShrineList();
     }
 
     public boolean openInventory(Player p) {
@@ -113,7 +132,7 @@ public class CloudManager implements Listener {
     public void saveOnLeave(PlayerQuitEvent ev) {
         UserCloud is = invs.remove(ev.getPlayer());
         if (is != null)
-            is.saveInventory();
+            is.save();
     }
 
     @EventHandler

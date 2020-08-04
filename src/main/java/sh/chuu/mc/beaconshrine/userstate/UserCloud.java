@@ -9,6 +9,7 @@ import sh.chuu.mc.beaconshrine.BeaconShrine;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -20,6 +21,7 @@ public class UserCloud {
     private final File configFile;
     private final YamlConfiguration config;
     private Inventory inv = null;
+    private List<Integer> tunedShrines = null;
 
     public UserCloud(UUID uuid) throws IOException {
         this.configFile = new File(plugin.getDataFolder() + "/inventories", uuid + ".yml");
@@ -31,10 +33,12 @@ public class UserCloud {
             configFile.createNewFile();
         }
         this.config = YamlConfiguration.loadConfiguration(configFile);
-        loadInventory();
+        loadData();
     }
 
-    private void loadInventory() throws IOException {
+    private void loadData() throws IOException {
+        tunedShrines = config.getIntegerList("ts");
+
         String s = config.getString("i");
         if (s == null) {
             inv = Bukkit.createInventory(null, SIZE, INVENTORY_NAME);
@@ -53,7 +57,23 @@ public class UserCloud {
         this.inv = inv;
     }
 
-    public void saveInventory() {
+    public boolean isTunedWithShrine(int id) {
+        return tunedShrines.contains(id);
+    }
+
+    public boolean attuneShrine(int id) {
+        if (tunedShrines.contains(id))
+            return false;
+        tunedShrines.add(id);
+        return true;
+    }
+
+    public List<Integer> getTunedShrineList() {
+        return tunedShrines;
+    }
+
+    public void save() {
+        config.set("ts", tunedShrines);
         config.set("i", inv == null ? null : BukkitSerialization.itemStackArrayToBase64(inv.getContents()));
         try {
             config.save(configFile);

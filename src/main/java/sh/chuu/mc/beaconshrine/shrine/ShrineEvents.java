@@ -22,12 +22,10 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
-import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.INGOT;
-import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.getShrineId;
-import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.useWarpScroll;
+import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
+import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.warpToShrine;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -115,11 +113,11 @@ public class ShrineEvents implements Listener {
         if (item == null)
             return;
 
-        if (item.getType() == BeaconShireItemUtils.WARP_SCROLL_MATERIAL) {
+        if (item.getType() == WARP_LIST_ITEM_TYPE) {
             if (ev.isRightClick()) {
-                BeaconShireItemUtils.WarpScroll ws = BeaconShireItemUtils.getWarpScrollData(item);
-                if (ws != null) {
-                    useWarpScroll((Player) he, ws);
+                int clickId = getWarpScrollGuiId(item);
+                if (clickId != -1) {
+                    warpToShrine((Player) he, clickId);
                 }
             }
             return;

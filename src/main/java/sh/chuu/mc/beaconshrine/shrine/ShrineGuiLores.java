@@ -17,41 +17,48 @@ public class ShrineGuiLores {
     public static final ItemStack CLOUD_CHEST_ITEM;
     public static final ItemStack SHOP_ITEM;
     public static final ItemStack ENDER_CHEST_ITEM;
+    public static final ItemStack WARP_LIST_ITEM;
     public static final Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
     public static final Material SHOP_ITEM_TYPE = Material.EMERALD;
     public static final Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
+    public static final Material WARP_LIST_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
+    public static final Material WARP_SCROLL_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
     public static final Material INGOT = Material.NETHERITE_INGOT;
-    static final long RESTOCK_TIMER = 21600000; // 6 hours
+    static final long RESTOCK_TIMER = 7200000; // 2 hours
     private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
 
     static {
-        CLOUD_CHEST_ITEM = new ItemStack(CLOUD_CHEST_ITEM_TYPE);
-        ItemMeta cim = CLOUD_CHEST_ITEM.getItemMeta();
-        //noinspection ConstantConditions Existing item always have ItemMeta
-        cim.setDisplayName(ChatColor.YELLOW + "Open Personal Cloud Chest");
-        cim.setLore(ImmutableList.of(ChatColor.GRAY + "Access this chest from every Shrine!"));
-        cim.addEnchant(Enchantment.DURABILITY, 1, true);
-        cim.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        CLOUD_CHEST_ITEM.setItemMeta(cim);
+        CLOUD_CHEST_ITEM = createGuiItem("Open Personal Cloud Chest",
+                CLOUD_CHEST_ITEM_TYPE,
+                ImmutableList.of(ChatColor.GRAY + "Access this chest from every Shrine!"),
+                true);
 
-        SHOP_ITEM = new ItemStack(SHOP_ITEM_TYPE);
-        ItemMeta sim = SHOP_ITEM.getItemMeta();
-        //noinspection ConstantConditions Existing item always have ItemMeta
-        sim.setDisplayName(ChatColor.YELLOW + "Open Scroll Shop");
-        sim.addEnchant(Enchantment.DURABILITY, 1, true);
-        sim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
-        SHOP_ITEM.setItemMeta(sim);
+        SHOP_ITEM = createGuiItem("Open Scroll Shop", SHOP_ITEM_TYPE, null, true);
 
-        ENDER_CHEST_ITEM = new ItemStack(ENDER_CHEST_ITEM_TYPE);
-        ItemMeta eim = ENDER_CHEST_ITEM.getItemMeta();
-        //noinspection ConstantConditions Existing item always have ItemMeta
-        eim.setDisplayName(ChatColor.YELLOW + "Open Ender Chest");
-        eim.addEnchant(Enchantment.DURABILITY, 1, true);
-        eim.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
-        ENDER_CHEST_ITEM.setItemMeta(eim);
+        ENDER_CHEST_ITEM = createGuiItem("Open Ender Chest", ENDER_CHEST_ITEM_TYPE, null, false);
+
+        WARP_LIST_ITEM = createGuiItem("Warp to...",
+                WARP_LIST_ITEM_TYPE,
+                ImmutableList.of(ChatColor.GRAY + "Warp to any synced shrines"),
+                true);
+        // TODO change item and meta, and add gui event to this
     }
 
-    public static ItemStack createShrineItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
+    private static ItemStack createGuiItem(String name, Material material, List<String> lore, boolean shiny) {
+        ItemStack ret = new ItemStack(material);  // TODO change item and meta, and add gui event to this
+        ItemMeta im = ret.getItemMeta();
+        //noinspection ConstantConditions Existing item always have ItemMeta
+        im.setDisplayName(ChatColor.YELLOW + name);
+        if (lore != null)
+            im.setLore(lore);
+        if (shiny)
+            im.addEnchant(Enchantment.DURABILITY, 1, true);
+        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_POTION_EFFECTS);
+        ret.setItemMeta(im);
+        return ret;
+    }
+
+    public static ItemStack createShrineActivatorItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
         ItemStack ret = new ItemStack(INGOT);
         ItemMeta im = ret.getItemMeta();
         if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
@@ -66,6 +73,35 @@ public class ShrineGuiLores {
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         ret.setItemMeta(im);
         return ret;
+    }
+
+    public static ItemStack createWarpScrollGui(int id, String name, ChatColor cc) {
+        ItemStack ret = new ItemStack(WARP_SCROLL_ITEM_TYPE);
+        ItemMeta im = ret.getItemMeta();
+        String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
+        im.setDisplayName(ChatColor.YELLOW + "Warp to: " + color + name);
+        im.setLore(ImmutableList.of(
+                SHIRE_ID_HEADER + id
+        ));
+        im.addEnchant(Enchantment.DURABILITY, 1, true);
+        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS);
+        ret.setItemMeta(im);
+        return ret;
+    }
+
+    public static int getWarpScrollGuiId(ItemStack item) {
+        if (item.getType() != WARP_SCROLL_ITEM_TYPE) return -1;
+        ItemMeta im = item.getItemMeta();
+        if (im.hasLore()) {
+            List<String> l = im.getLore();
+            if (l.size() == 0) return -1;
+            try {
+                return Integer.parseInt(l.get(0).substring(SHIRE_ID_HEADER.length()));
+            } catch (NumberFormatException ex) {
+                return -1;
+            }
+        }
+        return -1;
     }
 
     public static int getShrineId(Inventory inventory) {
