@@ -95,6 +95,18 @@ public class CloudManager implements Listener {
         return is.getTunedShrineList();
     }
 
+    public long getNextWarp(Player p) {
+        UserCloud is = invs.get(p);
+        if (is == null) return -1;
+        return is.getNextWarp();
+    }
+
+    public void setNextWarp(Player p, long nextWarp) {
+        UserCloud is = invs.get(p);
+        if (is == null) return;
+        is.setNextWarp(nextWarp);
+    }
+
     public boolean openInventory(Player p) {
         UserCloud is = invs.get(p);
         if (is == null)

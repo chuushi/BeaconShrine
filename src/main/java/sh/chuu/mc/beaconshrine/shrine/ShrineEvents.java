@@ -4,7 +4,6 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -128,8 +127,7 @@ public class ShrineEvents implements Listener {
                 ev.setCancelled(true);
                 int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
-                    clickNoise(p);
-                    manager.getShrine(clickId).warpPlayer(p);
+                    manager.clickedWarpGui(p, clickId);
                 }
                 return;
             }
@@ -150,7 +148,6 @@ public class ShrineEvents implements Listener {
         if (item == null) return;
 
         if (gui.type == ShrineManager.GuiType.HOME) {
-            clickNoise(p);
             manager.clickedGui(gui.shrine.getId(), item, p);
         }
     }
@@ -224,9 +221,5 @@ public class ShrineEvents implements Listener {
             }
         }
         return ret;
-    }
-
-    private void clickNoise(Player p) {
-        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.3f, 1f);
     }
 }

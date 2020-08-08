@@ -1,9 +1,8 @@
 package sh.chuu.mc.beaconshrine.shrine;
 
-import com.google.common.collect.ImmutableList;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -187,6 +186,7 @@ public class ShrineManager {
         Material type = slot.getType();
         if (type == CLOUD_CHEST_ITEM_TYPE) {
             p.closeInventory();
+            clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getCloudManager().openInventory(p), 1L);
             return;
         }
@@ -194,6 +194,7 @@ public class ShrineManager {
         if (type == WARP_LIST_ITEM_TYPE) {
             ShrineMultiblock shrine = shrines.get(id);
             p.closeInventory();
+            clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
                 p.openInventory(getWarpGui(p, id));
@@ -203,6 +204,7 @@ public class ShrineManager {
 
         if (type == ENDER_CHEST_ITEM_TYPE) {
             p.closeInventory();
+            clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(p.getEnderChest()), 1L);
             return;
         }
@@ -213,6 +215,7 @@ public class ShrineManager {
                 return;
             }
             p.closeInventory();
+            clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.SHOP));
                 shrine.openMerchant(p);
@@ -227,9 +230,20 @@ public class ShrineManager {
             if (bs instanceof ShulkerBox){
                 // Shulker box within
                 p.closeInventory();
+                clickNoise(p);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrines.get(id).getInventory()), 1L);
             }
         }
+    }
+
+    public void clickedWarpGui(Player p, int id) {
+        clickNoise(p);
+        p.closeInventory();
+        long diff = plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
+        if (diff > 0)
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGuiLores.warpTimeLeft(diff)));
+        else
+            getShrine(id).warpPlayer(p);
     }
 
     ShrineMultiblock updateShrine(int id, ShulkerBox s) {

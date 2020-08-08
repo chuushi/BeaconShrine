@@ -3,7 +3,9 @@ package sh.chuu.mc.beaconshrine.shrine;
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -158,14 +160,14 @@ public class ShrineGuiLores {
         //noinspection ConstantConditions Existing item always have ItemMeta
         im.setLore(ImmutableList.of(
                 ChatColor.GRAY + s,
-                ChatColor.GRAY + timeLeft(restock)
+                ChatColor.GRAY + restockTimeLeft(restock)
         ));
         ret.setItemMeta(im);
         return ret;
     }
 
     private static final String FULLY_STOCKED = "Fully stocked!";
-    private static String timeLeft(long restock) {
+    private static String restockTimeLeft(long restock) {
         if (restock == -1) {
             return FULLY_STOCKED;
         }
@@ -185,6 +187,17 @@ public class ShrineGuiLores {
         }
     }
 
+    static String warpTimeLeft(long diff) {
+        if (diff > 60000) {
+            long ret = (diff/60000) + 1;
+            return "You can warp in " + ret + " minutes";
+        } else {
+            long ret = (diff/1000) + 1;
+            return "You can warp in " + ret + " seconds";
+        }
+    }
+
+
     public static List<Integer> getWarpOrderGui(Inventory inv, int currentId) {
         List<Integer> ret = new ArrayList<>();
         for (ItemStack item : inv) {
@@ -194,5 +207,9 @@ public class ShrineGuiLores {
             else ret.add(id);
         }
         return ret;
+    }
+
+    public static void clickNoise(Player p) {
+        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.3f, 1f);
     }
 }

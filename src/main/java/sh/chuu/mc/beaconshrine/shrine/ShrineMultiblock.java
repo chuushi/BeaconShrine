@@ -24,6 +24,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
@@ -39,6 +40,7 @@ public class ShrineMultiblock {
     private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
     private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
+    private static final int WARP_COOLDOWN = 300000;
     static final int RADIUS = 4;
     private final int id;
     private String name;
@@ -299,6 +301,7 @@ public class ShrineMultiblock {
 
     public CompletableFuture<Boolean> warpPlayer(Player p) {
         ShrineManager manager = plugin.getShrineManager();
+        CloudManager cloudManager = plugin.getCloudManager();
         if (!manager.warpAdd(p)) {
             return CompletableFuture.completedFuture(false);
         } else if (!isValid()) {
@@ -359,6 +362,7 @@ public class ShrineMultiblock {
                         loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
                     } else if (i == 0) {
                         ShrineParticles.warpBoom(loc, c);
+                        cloudManager.setNextWarp(p, System.currentTimeMillis() + WARP_COOLDOWN);
                         p.teleport(tpLoc);
                         p.removePotionEffect(PotionEffectType.LEVITATION);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));

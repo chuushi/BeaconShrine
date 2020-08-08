@@ -22,6 +22,7 @@ public class UserCloud {
     private final YamlConfiguration config;
     private Inventory inv = null;
     private List<Integer> tunedShrines = null;
+    private long nextWarp = 0;
 
     public UserCloud(UUID uuid) throws IOException {
         this.configFile = new File(plugin.getDataFolder() + "/inventories", uuid + ".yml");
@@ -70,6 +71,14 @@ public class UserCloud {
 
     public List<Integer> getTunedShrineList() {
         return tunedShrines;
+    }
+
+    public long getNextWarp() {
+        return nextWarp;
+    }
+
+    public void setNextWarp(long nextWarp) {
+        this.nextWarp = nextWarp;
     }
 
     public void save() {
