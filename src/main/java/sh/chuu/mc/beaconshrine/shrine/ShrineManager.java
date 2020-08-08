@@ -35,6 +35,7 @@ public class ShrineManager {
     private final Map<Integer, ShrineMultiblock> shrines = new HashMap<>();
     private final Map<Player, GuiView> whichGui = new LinkedHashMap<>();
     private final Set<Player> attuning = new LinkedHashSet<>();
+    private final Set<Player> warping = new LinkedHashSet<>();
     private int nextId = 0;
 
     static class GuiView {
@@ -135,6 +136,14 @@ public class ShrineManager {
                         new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + timer + (timer-- == 1 ? " second" : " seconds")).create());
             }
         }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    boolean warpAdd(Player p) {
+        return warping.add(p);
+    }
+
+    void warpDone(Player p) {
+        warping.remove(p);
     }
 
     Inventory getWarpGui(Player p, int currentId) {

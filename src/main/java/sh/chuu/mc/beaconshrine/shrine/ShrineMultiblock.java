@@ -298,7 +298,13 @@ public class ShrineMultiblock {
     }
 
     public CompletableFuture<Boolean> warpPlayer(Player p) {
-        if (isValid()) {
+        ShrineManager manager = plugin.getShrineManager();
+        if (!manager.warpAdd(p)) {
+            return CompletableFuture.completedFuture(false);
+        } else if (!isValid()) {
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
+            return CompletableFuture.completedFuture(false);
+        } else {
             World w = getWorld();
             int x = getX();
             int z = getZ();
@@ -333,24 +339,32 @@ public class ShrineMultiblock {
                 final double x = pLoc.getX();
                 final double y = pLoc.getY();
                 final double z = pLoc.getZ();
+                final Color c = color == null ? Color.WHITE : color.getColor();
 
                 @Override
                 public void run() {
                     Location loc = p.getLocation();
-                    final Particle.DustOptions dustOpt = new Particle.DustOptions(color == null ? Color.WHITE : color.getColor(), 1);
-                    if (i > 40) {
+                    final Particle.DustOptions dustOpt = new Particle.DustOptions(c, 1);
+
+                    if (i > 30) {
                         if (loc.getX() != x || loc.getY() != y || loc.getZ() != z) {
                             ret.complete(false);
                             this.cancel();
                         }
                         ShrineParticles.warpWarmUp(loc, dustOpt, i);
-                    } else if (i == 40) {
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 16, false, false, false));
+                    } else if (i == 30) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
+                    } else if (i == 10) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
                     } else if (i == 0) {
+                        ShrineParticles.warpBoom(loc, c);
                         p.teleport(l);
+                        p.removePotionEffect(PotionEffectType.LEVITATION);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
                         ret.complete(true);
+                    } else if (i == -1) {
+                        ShrineParticles.warpBoom(l, c);
                     } else if (i == -100) {
                         this.cancel();
                     }
@@ -358,11 +372,14 @@ public class ShrineMultiblock {
                     ShrineParticles.warpWarmUp(loc, dustOpt, i);
                     i--;
                 }
+
+                @Override
+                public synchronized void cancel() throws IllegalStateException {
+                    super.cancel();
+                    manager.warpDone(p);
+                }
             }.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
             return ret;
-        } else {
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
-            return CompletableFuture.completedFuture(false);
         }
     }
 

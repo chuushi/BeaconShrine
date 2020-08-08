@@ -7,6 +7,8 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -15,6 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -35,6 +38,13 @@ public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final ShrineManager manager = plugin.getShrineManager();
     private final BaseComponent shrineInitFailText = new TextComponent("Shrine is not set up properly; run /shrinehelp");
+
+    @EventHandler
+    public void shrineFirework(EntityDamageByEntityEvent ev) {
+        Entity damager = ev.getDamager();
+        if (damager instanceof Firework && damager.hasMetadata("noDamage"))
+            ev.setCancelled(true);
+    }
 
     @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
     public void shrineClick(PlayerInteractEvent ev) {
