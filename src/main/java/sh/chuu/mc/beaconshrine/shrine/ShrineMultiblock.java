@@ -2,6 +2,9 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.Block;
@@ -17,17 +20,24 @@ import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
 
 public class ShrineMultiblock {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
+    private static final BaseComponent SAME_DIMENSION_REQUIRED = new TextComponent("Shrine is in another dimension");
+    private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
+    private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
     static final int RADIUS = 4;
     private final int id;
@@ -285,6 +295,75 @@ public class ShrineMultiblock {
 
     ItemStack createWarpScrollGuiItem(boolean urHere) {
         return ShrineGuiLores.createWarpGui(id, name, symbolItemType, cc, urHere);
+    }
+
+    public CompletableFuture<Boolean> warpPlayer(Player p) {
+        if (isValid()) {
+            World w = getWorld();
+            int x = getX();
+            int z = getZ();
+            Location l = p.getLocation();
+            if (w != l.getWorld()) {
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
+                return CompletableFuture.completedFuture(false);
+            }
+            l.setX(x + 0.5d);
+            boolean isNether = w.getEnvironment() == World.Environment.NETHER;
+            if (isNether) {
+                Block b = w.getBlockAt(x, getShulkerY() + 2, z);
+                int air = 8;
+                while (b.getY() < 124 && air != 0) {
+                    if (b.isPassable()) air--;
+                    else air = Math.max(air, 3);
+                    b = b.getRelative(BlockFace.UP);
+                }
+                if (b.getY() == 124) {
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
+                    return CompletableFuture.completedFuture(false);
+                }
+                l.setY(b.getY());
+            } else {
+                l.setY(w.getHighestBlockYAt(x, z) + 30);
+            }
+            l.setZ(z + 0.5d);
+            CompletableFuture<Boolean> ret = new CompletableFuture<>();
+            Location pLoc = p.getLocation();
+            new BukkitRunnable() {
+                int i = 100;
+                final double x = pLoc.getX();
+                final double y = pLoc.getY();
+                final double z = pLoc.getZ();
+
+                @Override
+                public void run() {
+                    Location loc = p.getLocation();
+                    final Particle.DustOptions dustOpt = new Particle.DustOptions(color == null ? Color.WHITE : color.getColor(), 1);
+                    if (i > 40) {
+                        if (loc.getX() != x || loc.getY() != y || loc.getZ() != z) {
+                            ret.complete(false);
+                            this.cancel();
+                        }
+                        ShrineParticles.warpWarmUp(loc, dustOpt, i);
+                    } else if (i == 40) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 16, false, false, false));
+                    } else if (i == 0) {
+                        p.teleport(l);
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
+                        ret.complete(true);
+                    } else if (i == -100) {
+                        this.cancel();
+                    }
+
+                    ShrineParticles.warpWarmUp(loc, dustOpt, i);
+                    i--;
+                }
+            }.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
+            return ret;
+        } else {
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     void save(ConfigurationSection cs) {

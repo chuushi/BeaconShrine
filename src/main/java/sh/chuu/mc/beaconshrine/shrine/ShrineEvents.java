@@ -30,7 +30,6 @@ import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import java.util.List;
 
 import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
-import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.warpToShrine;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -118,7 +117,7 @@ public class ShrineEvents implements Listener {
                 ev.setCancelled(true);
                 int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
-                    warpToShrine((Player) he, clickId);
+                    manager.getShrine(clickId).warpPlayer((Player) he);
                 }
                 return;
             }

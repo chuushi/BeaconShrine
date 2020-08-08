@@ -34,9 +34,6 @@ public class BeaconShireItemUtils {
     private static final String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";
     private static final String WARP_SCROLL_UUID_PREFIX = ChatColor.DARK_GRAY.toString();
     private static final String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
-    private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
-    private static final BaseComponent SAME_DIMENSION_REQUIRED = new TextComponent("Shrine is in another dimension");
-    private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
 
 
     public static Inventory copyPlayerInventory(Player p, String name) {
@@ -91,77 +88,6 @@ public class BeaconShireItemUtils {
         return new WarpScroll(
                 Integer.parseInt(lore.get(4).substring(WARP_SCROLL_SHRINE_ID_PREFIX.length())),
                 UUID.fromString(lore.get(3).substring(WARP_SCROLL_UUID_PREFIX.length())));
-    }
-
-    public static CompletableFuture<Boolean> warpToShrine(Player p, int id) {
-        ShrineMultiblock shrine = BeaconShrine.getInstance().getShrineManager().getShrine(id);
-        if (shrine.isValid()) {
-            World w = shrine.getWorld();
-            int x = shrine.getX();
-            int z = shrine.getZ();
-            Location l = p.getLocation();
-            if (w != l.getWorld()) {
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
-                return CompletableFuture.completedFuture(false);
-            }
-            l.setX(x + 0.5d);
-            boolean isNether = w.getEnvironment() == World.Environment.NETHER;
-            if (isNether) {
-                Block b = w.getBlockAt(x, shrine.getShulkerY() + 2, z);
-                int air = 8;
-                while (b.getY() < 124 && air != 0) {
-                    if (b.isPassable()) air--;
-                    else air = Math.max(air, 3);
-                    b = b.getRelative(BlockFace.UP);
-                }
-                if (b.getY() == 124) {
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
-                    return CompletableFuture.completedFuture(false);
-                }
-                l.setY(b.getY());
-            } else {
-                l.setY(w.getHighestBlockYAt(x, z) + 30);
-            }
-            l.setZ(z + 0.5d);
-            CompletableFuture<Boolean> ret = new CompletableFuture<>();
-            Location pLoc = p.getLocation();
-            new BukkitRunnable() {
-                int i = 100;
-                final double x = pLoc.getX();
-                final double y = pLoc.getY();
-                final double z = pLoc.getZ();
-
-                @Override
-                public void run() {
-                    Location loc = p.getLocation();
-                    DyeColor dyeColor = shrine.getDyeColor();
-                    final Particle.DustOptions color = new Particle.DustOptions(dyeColor == null ? Color.WHITE : dyeColor.getColor(), 1);
-                    if (i > 40) {
-                        if (loc.getX() != x || loc.getY() != y || loc.getZ() != z) {
-                            ret.complete(false);
-                            this.cancel();
-                        }
-                        ShrineParticles.warpWarmUp(loc, color, i);
-                    } else if (i == 40) {
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 16, false, false, false));
-                    } else if (i == 0) {
-                        p.teleport(l);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
-                        ret.complete(true);
-                    } else if (i == -100) {
-                        this.cancel();
-                    }
-
-                    ShrineParticles.warpWarmUp(loc, color, i);
-                    i--;
-                }
-            }.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
-            return ret;
-        } else {
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
-            return CompletableFuture.completedFuture(false);
-        }
     }
 
     @Immutable

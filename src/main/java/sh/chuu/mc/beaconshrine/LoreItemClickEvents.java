@@ -13,6 +13,8 @@ import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.*;
 
 public class LoreItemClickEvents implements Listener {
+    private final BeaconShrine plugin = BeaconShrine.getInstance();
+
     @EventHandler(priority = EventPriority.HIGH)
     public void beaconShrineItemUse(PlayerInteractEvent ev) {
         if (ev.useItemInHand() == Event.Result.DENY) return;
@@ -26,8 +28,10 @@ public class LoreItemClickEvents implements Listener {
 
         if (item.getType() == WARP_SCROLL_MATERIAL) {
             BeaconShireItemUtils.WarpScroll ws = getWarpScrollData(item);
-            if (ws != null) ev.setCancelled(true);
-            warpToShrine(ev.getPlayer(), ws.id).thenAccept(warped -> {
+            if (ws == null) return;
+
+            ev.setCancelled(true);
+            plugin.getShrineManager().getShrine(ws.id).warpPlayer(ev.getPlayer()).thenAccept(warped -> {
                 if (warped) item.setAmount(item.getAmount() - 1);
             });
         }
