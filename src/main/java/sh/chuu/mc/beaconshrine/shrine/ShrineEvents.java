@@ -138,7 +138,6 @@ public class ShrineEvents implements Listener {
             if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
             if (cursor != null) {
                 boolean isWarpOnCursor = isWarpGui(cursor);
-                plugin.getLogger().info(isTopInv + ", " + isWarpOnCursor);
                 if (isTopInv ^ isWarpOnCursor) {
                     ev.setCancelled(true);
                 }

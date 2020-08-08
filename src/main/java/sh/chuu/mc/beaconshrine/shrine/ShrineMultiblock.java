@@ -305,7 +305,7 @@ public class ShrineMultiblock {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
             return CompletableFuture.completedFuture(false);
         } else {
-            p.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
+            p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
             World w = getWorld();
             int x = getX();
             int z = getZ();
