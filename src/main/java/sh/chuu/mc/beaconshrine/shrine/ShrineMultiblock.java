@@ -305,15 +305,16 @@ public class ShrineMultiblock {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
             return CompletableFuture.completedFuture(false);
         } else {
+            p.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
             World w = getWorld();
             int x = getX();
             int z = getZ();
-            Location l = p.getLocation();
-            if (w != l.getWorld()) {
+            Location tpLoc = p.getLocation();
+            if (w != tpLoc.getWorld()) {
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
                 return CompletableFuture.completedFuture(false);
             }
-            l.setX(x + 0.5d);
+            tpLoc.setX(x + 0.5d);
             boolean isNether = w.getEnvironment() == World.Environment.NETHER;
             if (isNether) {
                 Block b = w.getBlockAt(x, getShulkerY() + 2, z);
@@ -327,11 +328,11 @@ public class ShrineMultiblock {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
                     return CompletableFuture.completedFuture(false);
                 }
-                l.setY(b.getY());
+                tpLoc.setY(b.getY());
             } else {
-                l.setY(w.getHighestBlockYAt(x, z) + 30);
+                tpLoc.setY(w.getHighestBlockYAt(x, z) + 30);
             }
-            l.setZ(z + 0.5d);
+            tpLoc.setZ(z + 0.5d);
             CompletableFuture<Boolean> ret = new CompletableFuture<>();
             Location pLoc = p.getLocation();
             new BukkitRunnable() {
@@ -351,20 +352,20 @@ public class ShrineMultiblock {
                             ret.complete(false);
                             this.cancel();
                         }
-                        ShrineParticles.warpWarmUp(loc, dustOpt, i);
                     } else if (i == 30) {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
                     } else if (i == 10) {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
+                        loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
                     } else if (i == 0) {
                         ShrineParticles.warpBoom(loc, c);
-                        p.teleport(l);
+                        p.teleport(tpLoc);
                         p.removePotionEffect(PotionEffectType.LEVITATION);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
                         ret.complete(true);
                     } else if (i == -1) {
-                        ShrineParticles.warpBoom(l, c);
+                        ShrineParticles.warpBoom(tpLoc, c);
                     } else if (i == -100) {
                         this.cancel();
                     }

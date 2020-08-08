@@ -4,6 +4,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -108,9 +109,9 @@ public class ShrineEvents implements Listener {
 
     @EventHandler
     public void guiClick(InventoryClickEvent ev) {
-        HumanEntity he = ev.getWhoClicked();
+        Player p = (Player) ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
-        ShrineManager.GuiView gui = manager.getGuiView(he);
+        ShrineManager.GuiView gui = manager.getGuiView(p);
         if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
             return;
 
@@ -127,7 +128,8 @@ public class ShrineEvents implements Listener {
                 ev.setCancelled(true);
                 int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
-                    manager.getShrine(clickId).warpPlayer((Player) he);
+                    clickNoise(p);
+                    manager.getShrine(clickId).warpPlayer(p);
                 }
                 return;
             }
@@ -149,7 +151,8 @@ public class ShrineEvents implements Listener {
         if (item == null) return;
 
         if (gui.type == ShrineManager.GuiType.HOME) {
-            manager.clickedGui(gui.shrine.getId(), item, (Player) he);
+            clickNoise(p);
+            manager.clickedGui(gui.shrine.getId(), item, p);
         }
     }
 
@@ -222,5 +225,9 @@ public class ShrineEvents implements Listener {
             }
         }
         return ret;
+    }
+
+    private void clickNoise(Player p) {
+        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.3f, 1f);
     }
 }
