@@ -105,14 +105,15 @@ public class ShrineManager {
     private void doAttuneAnimation(Player p, int id) {
         if (attuning.contains(p)) return;
         attuning.add(p);
-        Location l = p.getLocation();
-        double x = l.getX();
-        double y = l.getY();
-        double z = l.getZ();
-        ShrineMultiblock shrine = getShrine(id);
 
         new BukkitRunnable() {
-            private int timer = 5;
+            final Location l = p.getLocation();
+            final double x = l.getX();
+            final double y = l.getY();
+            final double z = l.getZ();
+            final ShrineMultiblock shrine = getShrine(id);
+            private int step = 100;
+
             @Override
             public void run() {
                 Location l = p.getLocation();
@@ -121,20 +122,20 @@ public class ShrineManager {
                             new ComponentBuilder("Attuning cancelled due to movement or invalid shrine").create());
                     attuning.remove(p);
                     this.cancel();
-                    return;
-                }
-                if (timer == 0) {
+                } else if (step == 0) {
                     attuning.remove(p);
                     this.cancel();
                     plugin.getCloudManager().attuneShrine(p, id);
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuned with " + shrine.getName()).create());
-                    return;
+                } else if (step%20 == 0) {
+                    int secs = step /20;
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                            new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
                 }
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                        new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + timer + (timer-- == 1 ? " second" : " seconds")).create());
+                ShrineParticles.attuning(p.getLocation(), new Location(shrine.getWorld(), shrine.getX() + 0.5d, shrine.getShulkerY() + 0.5d, shrine.getZ() + 0.5d), step--);
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     boolean warpAdd(Player p) {

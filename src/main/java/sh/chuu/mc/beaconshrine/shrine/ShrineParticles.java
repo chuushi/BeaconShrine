@@ -6,6 +6,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 
 public class ShrineParticles {
@@ -13,7 +14,16 @@ public class ShrineParticles {
         
     }
 
-    // Step: between 1 and 100
+    public static void attuning(Location person, Location shrine, int step) {
+        // TODO optimize this thing
+        Vector v = shrine.toVector().subtract(person.toVector()).divide(new Vector(20, 20, 20)); // TODO
+        int m = step%20;
+        double x = person.getX() + v.getX() * m;
+        double y = person.getY() + v.getY() * m;
+        double z = person.getZ() + v.getZ() * m;
+        shrine.getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 4, 0.25, 0.25, 0.25, new Particle.DustOptions(Color.WHITE, 1));
+    }
+
     public static void warpWarmUp(Location loc, Particle.DustOptions color, int step) {
         double x = loc.getX() + Math.cos(step * 0.4);
         double y = loc.getY() + 1.0;
@@ -31,6 +41,5 @@ public class ShrineParticles {
         boom.setSilent(true);
         boom.setMetadata("noDamage", new FixedMetadataValue(BeaconShrine.getInstance(), true));
         boom.detonate();
-
     }
 }
