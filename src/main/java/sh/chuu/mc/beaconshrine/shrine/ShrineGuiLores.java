@@ -9,6 +9,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,5 +183,16 @@ public class ShrineGuiLores {
         } else {
             return "Restocking in less than a minute";
         }
+    }
+
+    public static List<Integer> getWarpOrderGui(Inventory inv, int currentId) {
+        List<Integer> ret = new ArrayList<>();
+        for (ItemStack item : inv) {
+            if (item == null || item.getType() == Material.AIR) continue;
+            int id = getWarpIdGui(item);
+            if (id == -1) ret.add(currentId);
+            else ret.add(id);
+        }
+        return ret;
     }
 }

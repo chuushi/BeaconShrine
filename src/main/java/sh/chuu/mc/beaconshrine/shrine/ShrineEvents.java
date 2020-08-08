@@ -22,9 +22,12 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
+
+import java.util.List;
 
 import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
 import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.warpToShrine;
@@ -168,14 +171,27 @@ public class ShrineEvents implements Listener {
 
     @EventHandler
     public void guiClose(InventoryCloseEvent ev) {
-        ShrineManager.GuiView gui = manager.closeShrineGui(ev.getPlayer());
-        Inventory inv = ev.getInventory();
+        Player p = (Player) ev.getPlayer();
+        ShrineManager.GuiView gui = manager.closeShrineGui(p);
+        InventoryView view = ev.getView();
+        Inventory inv = view.getTopInventory();
 
         if (gui != null) {
-            // TODO Clear id list of player's ids
             if (gui.type == ShrineManager.GuiType.WARP_LIST) {
-                // TODO set list of player's ids get order of IDs in "inv" (remember to account for "you are here")
-                // TODO account for the item that may have been on the hand
+                // account for the item that may have been on the hand
+                ItemStack cursor = view.getCursor();
+                if (cursor != null && isWarpGui(cursor)) {
+                    inv.addItem(cursor);
+                    view.setCursor(null);
+                }
+
+                List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
+                List<Integer> newList = ShrineGuiLores.getWarpOrderGui(inv, gui.shrine.getId());
+
+                if (oldList.equals(newList)) return;
+
+                oldList.clear();
+                oldList.addAll(newList);
             }
             return;
         }
