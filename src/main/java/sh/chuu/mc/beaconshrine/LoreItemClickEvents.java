@@ -26,10 +26,10 @@ public class LoreItemClickEvents implements Listener {
 
         if (item.getType() == WARP_SCROLL_MATERIAL) {
             BeaconShireItemUtils.WarpScroll ws = getWarpScrollData(item);
-            if (ws != null && warpToShrine(ev.getPlayer(), ws.id)) {
-                item.setAmount(item.getAmount() - 1);
-                ev.setCancelled(true);
-            }
+            if (ws != null) ev.setCancelled(true);
+            warpToShrine(ev.getPlayer(), ws.id).thenAccept(warped -> {
+                if (warped) item.setAmount(item.getAmount() - 1);
+            });
         }
     }
 }

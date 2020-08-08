@@ -6,10 +6,7 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
@@ -22,11 +19,14 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
+import sh.chuu.mc.beaconshrine.shrine.ShrineParticles;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class BeaconShireItemUtils {
     public static final Material WARP_SCROLL_MATERIAL = Material.FLOWER_BANNER_PATTERN;
@@ -93,7 +93,7 @@ public class BeaconShireItemUtils {
                 UUID.fromString(lore.get(3).substring(WARP_SCROLL_UUID_PREFIX.length())));
     }
 
-    public static boolean warpToShrine(Player p, int id) {
+    public static CompletableFuture<Boolean> warpToShrine(Player p, int id) {
         ShrineMultiblock shrine = BeaconShrine.getInstance().getShrineManager().getShrine(id);
         if (shrine.isValid()) {
             World w = shrine.getWorld();
@@ -102,7 +102,7 @@ public class BeaconShireItemUtils {
             Location l = p.getLocation();
             if (w != l.getWorld()) {
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
-                return false;
+                return CompletableFuture.completedFuture(false);
             }
             l.setX(x + 0.5d);
             boolean isNether = w.getEnvironment() == World.Environment.NETHER;
@@ -116,21 +116,51 @@ public class BeaconShireItemUtils {
                 }
                 if (b.getY() == 124) {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
-                    return false;
+                    return CompletableFuture.completedFuture(false);
                 }
                 l.setY(b.getY());
             } else {
                 l.setY(w.getHighestBlockYAt(x, z) + 30);
             }
             l.setZ(z + 0.5d);
-            // TODO make this a timed event
-            p.teleport(l);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
-            return true;
+            CompletableFuture<Boolean> ret = new CompletableFuture<>();
+            Location pLoc = p.getLocation();
+            new BukkitRunnable() {
+                int i = 100;
+                final double x = pLoc.getX();
+                final double y = pLoc.getY();
+                final double z = pLoc.getZ();
+
+                @Override
+                public void run() {
+                    Location loc = p.getLocation();
+                    DyeColor dyeColor = shrine.getDyeColor();
+                    final Particle.DustOptions color = new Particle.DustOptions(dyeColor == null ? Color.WHITE : dyeColor.getColor(), 1);
+                    if (i > 40) {
+                        if (loc.getX() != x || loc.getY() != y || loc.getZ() != z) {
+                            ret.complete(false);
+                            this.cancel();
+                        }
+                        ShrineParticles.warpWarmUp(loc, color, i);
+                    } else if (i == 40) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 16, false, false, false));
+                    } else if (i == 0) {
+                        p.teleport(l);
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
+                        ret.complete(true);
+                    } else if (i == -100) {
+                        this.cancel();
+                    }
+
+                    ShrineParticles.warpWarmUp(loc, color, i);
+                    i--;
+                }
+            }.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
+            return ret;
         } else {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
     }
 

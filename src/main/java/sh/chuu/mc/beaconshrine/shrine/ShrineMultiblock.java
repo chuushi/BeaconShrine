@@ -2,10 +2,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -192,6 +189,10 @@ public class ShrineMultiblock {
 
     public String getName() {
         return name;
+    }
+
+    public DyeColor getDyeColor() {
+        return color;
     }
 
     Inventory getInventory() {

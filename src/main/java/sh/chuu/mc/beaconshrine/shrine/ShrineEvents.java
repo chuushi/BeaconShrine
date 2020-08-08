@@ -122,9 +122,6 @@ public class ShrineEvents implements Listener {
                 }
                 return;
             }
-            // yes no none
-            // t   f  t
-            // f   t  t
 
             ItemStack cursor = ev.getView().getCursor();
             if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
