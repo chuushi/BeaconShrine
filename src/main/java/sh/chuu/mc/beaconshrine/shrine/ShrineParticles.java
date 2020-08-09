@@ -1,9 +1,9 @@
 package sh.chuu.mc.beaconshrine.shrine;
 
-import com.google.common.collect.ImmutableList;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
@@ -14,22 +14,19 @@ public class ShrineParticles {
         
     }
 
-    public static void attuning(Location person, Location shrine, int step) {
-        // TODO optimize this thing
-        Vector v = shrine.toVector().subtract(person.toVector()).divide(new Vector(20, 20, 20)); // TODO
-        int m = step%20;
+    public static void attuning(Location person, Vector v, Particle.DustOptions color, int step) {
+        int m = step%10;
         double x = person.getX() + v.getX() * m;
         double y = person.getY() + v.getY() * m;
         double z = person.getZ() + v.getZ() * m;
-        shrine.getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 4, 0.25, 0.25, 0.25, new Particle.DustOptions(Color.WHITE, 1));
+        person.getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 4, 0.125, 0.125, 0.125, color);
+        if (step < 60)
+            particleAroundPlayer(person, color, step);
     }
 
     public static void warpWarmUp(Location loc, Particle.DustOptions color, int step) {
-        double x = loc.getX() + Math.cos(step * 0.4);
-        double y = loc.getY() + 1.0;
-        double z = loc.getZ() + Math.sin(step * 0.4);
         loc.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, loc, 1);
-        loc.getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 2, color);
+        particleAroundPlayer(loc, color, step);
     }
 
     public static void warpBoom(Location loc, Color color) {
@@ -41,5 +38,16 @@ public class ShrineParticles {
         boom.setSilent(true);
         boom.setMetadata("noDamage", new FixedMetadataValue(BeaconShrine.getInstance(), true));
         boom.detonate();
+    }
+
+    public static void ignitionSound(Player p) {
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
+    }
+
+    private static void particleAroundPlayer(Location loc, Particle.DustOptions color, int step) {
+        double x = loc.getX() + Math.cos(step * 0.4);
+        double y = loc.getY() + 1.0;
+        double z = loc.getZ() + Math.sin(step * 0.4);
+        loc.getWorld().spawnParticle(Particle.REDSTONE, x, y, z, 2, color);
     }
 }

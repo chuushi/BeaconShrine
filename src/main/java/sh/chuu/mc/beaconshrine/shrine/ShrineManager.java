@@ -3,9 +3,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -18,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 
 import java.io.File;
@@ -106,18 +105,26 @@ public class ShrineManager {
         if (attuning.contains(p)) return;
         attuning.add(p);
 
+        ShrineParticles.ignitionSound(p);
         new BukkitRunnable() {
-            final Location l = p.getLocation();
-            final double x = l.getX();
-            final double y = l.getY();
-            final double z = l.getZ();
+            final Location initLoc = p.getLocation();
+            final double x = initLoc.getX();
+            final double y = initLoc.getY();
+            final double z = initLoc.getZ();
             final ShrineMultiblock shrine = getShrine(id);
+            final Vector particleInterval = new Vector(shrine.getX() + 0.5, shrine.getShulkerY() + 0.5, shrine.getZ() + 0.5)
+                    .subtract(p.getLocation().toVector()).divide(new Vector(10, 10, 10));
+            final Particle.DustOptions dustColor = new Particle.DustOptions(
+                    shrine.getDyeColor() == null
+                            ? Color.WHITE
+                            : shrine.getDyeColor().getColor(),
+                    1);
             private int step = 100;
 
             @Override
             public void run() {
-                Location l = p.getLocation();
-                if (x != l.getX() || y != l.getY() || z != l.getZ() || !shrine.isValid()) {
+                Location newLoc = p.getLocation();
+                if (x != newLoc.getX() || y != newLoc.getY() || z != newLoc.getZ() || !shrine.isValid()) {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuning cancelled due to movement or invalid shrine").create());
                     attuning.remove(p);
@@ -133,7 +140,7 @@ public class ShrineManager {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
                 }
-                ShrineParticles.attuning(p.getLocation(), new Location(shrine.getWorld(), shrine.getX() + 0.5d, shrine.getShulkerY() + 0.5d, shrine.getZ() + 0.5d), step--);
+                ShrineParticles.attuning(initLoc, particleInterval, dustColor, step--);
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
