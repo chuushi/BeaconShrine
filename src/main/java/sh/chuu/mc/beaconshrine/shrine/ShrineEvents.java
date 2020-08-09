@@ -127,7 +127,7 @@ public class ShrineEvents implements Listener {
                 ev.setCancelled(true);
                 int clickId = getWarpIdGui(item);
                 if (clickId != -1) {
-                    manager.clickedWarpGui(p, clickId);
+                    manager.clickedWarpGui(p, clickId, gui.shrine);
                 }
                 return;
             }

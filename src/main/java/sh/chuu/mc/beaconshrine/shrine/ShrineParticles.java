@@ -17,7 +17,7 @@ public class ShrineParticles {
     }
 
     public static void beam(Location person, Vector v, Particle.DustOptions color) {
-        int interval = 20;
+        final int interval = 20;
         Vector inc = v.clone().divide(new Vector(interval, interval, interval));
         Location loc = person.clone();
         for (int i = 0; i < interval; i++) {

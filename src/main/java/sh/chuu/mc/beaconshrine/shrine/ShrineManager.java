@@ -97,8 +97,9 @@ public class ShrineManager {
         ShrineMultiblock s = shrines.get(id);
         if (s == null || !s.isValid()) return false;
 
-        Vector vector = ShrineParticles.getDiff(s.getX(), s.getShulkerY(), s.getZ(), p.getLocation());
-        ShrineParticles.beam(p.getLocation(), vector, s.getDustOptions());
+        Location loc = p.getLocation();
+        Vector vector = ShrineParticles.getDiff(s.getX(), s.getShulkerY(), s.getZ(), loc);
+        ShrineParticles.beam(loc, vector, s.getDustOptions());
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, GuiType.HOME));
         return true;
@@ -247,14 +248,14 @@ public class ShrineManager {
         }
     }
 
-    public void clickedWarpGui(Player p, int id) {
+    public void clickedWarpGui(Player p, int id, ShrineMultiblock guiShrine) {
         clickNoise(p);
         p.closeInventory();
         long diff = plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
         if (diff > 0)
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGuiLores.warpTimeLeft(diff)));
         else
-            getShrine(id).warpPlayer(p);
+            getShrine(id).warpPlayer(p, guiShrine);
     }
 
     ShrineMultiblock updateShrine(int id, ShulkerBox s) {

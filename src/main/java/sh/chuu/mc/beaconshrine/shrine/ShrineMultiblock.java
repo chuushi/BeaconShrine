@@ -305,7 +305,7 @@ public class ShrineMultiblock {
         return ShrineGuiLores.createWarpGui(id, name, symbolItemType, cc, urHere);
     }
 
-    public CompletableFuture<Boolean> warpPlayer(Player p) {
+    public CompletableFuture<Boolean> warpPlayer(Player p, ShrineMultiblock from) {
         ShrineManager manager = plugin.getShrineManager();
         CloudManager cloudManager = plugin.getCloudManager();
         if (manager.warpContains(p)) {
@@ -316,14 +316,13 @@ public class ShrineMultiblock {
             return CompletableFuture.completedFuture(false);
         } else {
             World w = getWorld();
-            int x = getX();
-            int z = getZ();
-            Location tpLoc = p.getLocation();
-            if (w != tpLoc.getWorld()) {
+            final double newX = x + 0.5d;
+            final double newY;
+            final double newZ = z + 0.5d;
+            if (w != p.getWorld()) {
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
                 return CompletableFuture.completedFuture(false);
             }
-            tpLoc.setX(x + 0.5d);
             boolean isNether = w.getEnvironment() == World.Environment.NETHER;
             if (isNether) {
                 Block b = w.getBlockAt(x, getShulkerY() + 2, z);
@@ -337,16 +336,17 @@ public class ShrineMultiblock {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
                     return CompletableFuture.completedFuture(false);
                 }
-                tpLoc.setY(b.getY());
+                newY = b.getY();
             } else {
-                tpLoc.setY(w.getHighestBlockYAt(x, z) + 30);
+                newY = w.getHighestBlockYAt(x, z) + 30;
             }
-            tpLoc.setZ(z + 0.5d);
 
-            Location fromLoc = p.getLocation();
-            Vector vector = ShrineParticles.getDiff(getX(), getShulkerY(), getZ(), fromLoc);
-            ShrineParticles.beam(fromLoc, vector, getDustOptions());
-            ShrineParticles.ignitionSound(p);
+            if (from != null) {
+                Location loc = p.getLocation();
+                Vector vector = ShrineParticles.getDiff(from.x, from.shulkerY, from.z, loc);
+                ShrineParticles.beam(loc, vector, getDustOptions());
+                ShrineParticles.ignitionSound(p);
+            }
 
             CompletableFuture<Boolean> ret = new CompletableFuture<>();
             Location pLoc = p.getLocation();
@@ -374,15 +374,20 @@ public class ShrineMultiblock {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
                         loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
                     } else if (i == 0) {
+                        Location to = p.getLocation();
+                        to.setX(newX);
+                        to.setY(newY);
+                        to.setZ(newZ);
+
                         ShrineParticles.warpBoom(loc, c);
                         cloudManager.setNextWarp(p, System.currentTimeMillis() + WARP_COOLDOWN);
-                        p.teleport(tpLoc);
+                        p.teleport(to);
                         p.removePotionEffect(PotionEffectType.LEVITATION);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, isNether ? 100 : 200, 0, false, false, false));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
                         ret.complete(true);
                     } else if (i == -1) {
-                        ShrineParticles.warpBoom(tpLoc, c);
+                        ShrineParticles.warpBoom(loc, c);
                     } else if (i == -100) {
                         this.cancel();
                     }

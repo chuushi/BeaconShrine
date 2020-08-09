@@ -53,7 +53,7 @@ public class LoreItemClickEvents implements Listener {
                     p.swingMainHand();
             }
 
-            plugin.getShrineManager().getShrine(ws.id).warpPlayer(p).thenAccept(warped -> {
+            plugin.getShrineManager().getShrine(ws.id).warpPlayer(p, null).thenAccept(warped -> {
                 if (warped) item.setAmount(item.getAmount() - 1);
             });
         }
