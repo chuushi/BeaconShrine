@@ -23,6 +23,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
@@ -203,8 +204,12 @@ public class ShrineMultiblock {
         return name;
     }
 
-    public DyeColor getDyeColor() {
-        return color;
+    public Color getColor() {
+        return color == null ? Color.WHITE : color.getColor();
+    }
+
+    public Particle.DustOptions getDustOptions() {
+        return new Particle.DustOptions(getColor(), 1);
     }
 
     Inventory getInventory() {
@@ -308,6 +313,8 @@ public class ShrineMultiblock {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
             return CompletableFuture.completedFuture(false);
         } else {
+            Vector vector = ShrineParticles.getDiff(getX(), getShulkerY(), getZ(), p.getLocation());
+            ShrineParticles.beam(p.getLocation(), vector, getDustOptions());
             ShrineParticles.ignitionSound(p);
             World w = getWorld();
             int x = getX();
@@ -343,12 +350,12 @@ public class ShrineMultiblock {
                 final double x = pLoc.getX();
                 final double y = pLoc.getY();
                 final double z = pLoc.getZ();
-                final Color c = color == null ? Color.WHITE : color.getColor();
+                final Color c = getColor();
 
                 @Override
                 public void run() {
                     Location loc = p.getLocation();
-                    final Particle.DustOptions dustOpt = new Particle.DustOptions(c, 1);
+                    final Particle.DustOptions dustOpt = getDustOptions();
 
                     if (i > 30) {
                         if (loc.getX() != x || loc.getY() != y || loc.getZ() != z) {
