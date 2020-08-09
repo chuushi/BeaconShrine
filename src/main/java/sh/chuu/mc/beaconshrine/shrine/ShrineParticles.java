@@ -17,7 +17,7 @@ public class ShrineParticles {
     }
 
     public static void beam(Location person, Vector v, Particle.DustOptions color) {
-        final int interval = 20;
+        final int interval = (int) v.length() * 4;
         Vector inc = v.clone().divide(new Vector(interval, interval, interval));
         Location loc = person.clone();
         for (int i = 0; i < interval; i++) {
@@ -61,8 +61,12 @@ public class ShrineParticles {
         boom.detonate();
     }
 
-    public static void ignitionSound(Player p) {
+    public static void shrineIgnitionSound(Player p) {
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
+    }
+
+    public static void paperIgnitionSound(Player p) {
+        p.getWorld().playSound(p.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 1, 1);
     }
 
     public static Vector getDiff(int x, int y, int z, Location pl) {

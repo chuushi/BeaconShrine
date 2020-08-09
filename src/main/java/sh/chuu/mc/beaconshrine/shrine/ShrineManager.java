@@ -109,7 +109,7 @@ public class ShrineManager {
         if (attuning.contains(p)) return;
         attuning.add(p);
 
-        ShrineParticles.ignitionSound(p);
+        ShrineParticles.shrineIgnitionSound(p);
         new BukkitRunnable() {
             final Location initLoc = p.getLocation();
             final double x = initLoc.getX();

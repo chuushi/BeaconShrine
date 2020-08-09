@@ -341,11 +341,17 @@ public class ShrineMultiblock {
                 newY = w.getHighestBlockYAt(x, z) + 30;
             }
 
+            Location loc = p.getLocation();
+            Vector vector;
+            Vector up = new Vector(0, 255 - loc.getY(), 0);
             if (from != null) {
-                Location loc = p.getLocation();
-                Vector vector = ShrineParticles.getDiff(from.x, from.shulkerY, from.z, loc);
+                vector = ShrineParticles.getDiff(from.x, from.shulkerY, from.z, loc);
+                ShrineParticles.shrineIgnitionSound(p);
+                ShrineParticles.beam(from.getShulkerLocation(), up, getDustOptions());
                 ShrineParticles.beam(loc, vector, getDustOptions());
-                ShrineParticles.ignitionSound(p);
+            } else {
+                ShrineParticles.beam(loc, up, getDustOptions());
+                ShrineParticles.paperIgnitionSound(p);
             }
 
             CompletableFuture<Boolean> ret = new CompletableFuture<>();
@@ -404,6 +410,10 @@ public class ShrineMultiblock {
             }.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
             return ret;
         }
+    }
+
+    private Location getShulkerLocation() {
+        return new Location(w, x + 0.5, shulkerY + 0.5, z + 0.5);
     }
 
     void save(ConfigurationSection cs) {
