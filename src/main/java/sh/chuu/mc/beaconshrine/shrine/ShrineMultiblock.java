@@ -40,6 +40,7 @@ public class ShrineMultiblock {
     private static final BaseComponent SAME_DIMENSION_REQUIRED = new TextComponent("Shrine is in another dimension");
     private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
     private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
+    private static final BaseComponent INVALID_WARPING = new TextComponent("Move to cancel the current warp first");
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
     private static final int WARP_COOLDOWN = 300000;
     static final int RADIUS = 4;
@@ -307,7 +308,8 @@ public class ShrineMultiblock {
     public CompletableFuture<Boolean> warpPlayer(Player p) {
         ShrineManager manager = plugin.getShrineManager();
         CloudManager cloudManager = plugin.getCloudManager();
-        if (!manager.warpContains(p)) {
+        if (manager.warpContains(p)) {
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_WARPING);
             return CompletableFuture.completedFuture(false);
         } else if (!isValid()) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
