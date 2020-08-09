@@ -307,15 +307,12 @@ public class ShrineMultiblock {
     public CompletableFuture<Boolean> warpPlayer(Player p) {
         ShrineManager manager = plugin.getShrineManager();
         CloudManager cloudManager = plugin.getCloudManager();
-        if (!manager.warpAdd(p)) {
+        if (!manager.warpContains(p)) {
             return CompletableFuture.completedFuture(false);
         } else if (!isValid()) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
             return CompletableFuture.completedFuture(false);
         } else {
-            Vector vector = ShrineParticles.getDiff(getX(), getShulkerY(), getZ(), p.getLocation());
-            ShrineParticles.beam(p.getLocation(), vector, getDustOptions());
-            ShrineParticles.ignitionSound(p);
             World w = getWorld();
             int x = getX();
             int z = getZ();
@@ -343,8 +340,15 @@ public class ShrineMultiblock {
                 tpLoc.setY(w.getHighestBlockYAt(x, z) + 30);
             }
             tpLoc.setZ(z + 0.5d);
+
+            Location fromLoc = p.getLocation();
+            Vector vector = ShrineParticles.getDiff(getX(), getShulkerY(), getZ(), fromLoc);
+            ShrineParticles.beam(fromLoc, vector, getDustOptions());
+            ShrineParticles.ignitionSound(p);
+
             CompletableFuture<Boolean> ret = new CompletableFuture<>();
             Location pLoc = p.getLocation();
+            manager.warpAdd(p);
             new BukkitRunnable() {
                 int i = 100;
                 final double x = pLoc.getX();

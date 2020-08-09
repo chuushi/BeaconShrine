@@ -23,6 +23,7 @@ public class ShrineParticles {
         for (int i = 0; i < interval; i++) {
             loc.add(inc);
             person.getWorld().spawnParticle(Particle.REDSTONE, loc, 2, 0.1, 0.1, 0.1, color);
+            person.getWorld().spawnParticle(Particle.CRIT, loc, 1);
         }
     }
 

@@ -144,8 +144,12 @@ public class ShrineManager {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
-    boolean warpAdd(Player p) {
-        return warping.add(p);
+    boolean warpContains(Player p) {
+        return warping.contains(p);
+    }
+
+    void warpAdd(Player p) {
+        warping.add(p);
     }
 
     void warpDone(Player p) {
