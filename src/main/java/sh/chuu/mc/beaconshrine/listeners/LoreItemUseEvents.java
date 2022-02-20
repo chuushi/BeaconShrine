@@ -28,11 +28,11 @@ public class LoreItemUseEvents implements Listener {
         Block b = ev.getClickedBlock();
         Action action = ev.getAction();
         ItemStack item = ev.getItem();
-        if (item == null || b == null
+        if (item == null
                 || ev.useItemInHand() == Event.Result.DENY
                 || action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK
                 || item.getType() != WARP_SCROLL_MATERIAL
-                || b.getType().isInteractable()
+                || b != null && b.getType().isInteractable()
         ) return;
 
         BeaconShireItemUtils.WarpScroll ws = getWarpScrollData(item);
@@ -48,12 +48,10 @@ public class LoreItemUseEvents implements Listener {
         }
 
         // Animation
-        if (action == Action.RIGHT_CLICK_AIR) {
-            if (ev.getHand() == EquipmentSlot.OFF_HAND)
-                p.swingOffHand();
-            else
-                p.swingMainHand();
-        }
+        if (ev.getHand() == EquipmentSlot.OFF_HAND)
+            p.swingOffHand();
+        else
+            p.swingMainHand();
 
         ev.setCancelled(true);
         plugin.getShrineManager().getShrine(ws.id()).warpPlayer(p, null).thenAccept(warped -> {
