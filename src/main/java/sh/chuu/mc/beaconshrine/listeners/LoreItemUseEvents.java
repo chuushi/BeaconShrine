@@ -47,9 +47,6 @@ public class LoreItemUseEvents implements Listener {
             return;
         }
 
-        // TODO Separate this part into its own function
-        ev.setCancelled(true);
-
         // Animation
         if (action == Action.RIGHT_CLICK_AIR) {
             if (ev.getHand() == EquipmentSlot.OFF_HAND)
@@ -58,6 +55,7 @@ public class LoreItemUseEvents implements Listener {
                 p.swingMainHand();
         }
 
+        ev.setCancelled(true);
         plugin.getShrineManager().getShrine(ws.id()).warpPlayer(p, null).thenAccept(warped -> {
             if (warped) item.setAmount(item.getAmount() - 1);
         });
