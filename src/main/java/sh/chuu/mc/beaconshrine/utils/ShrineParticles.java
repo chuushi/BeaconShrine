@@ -17,8 +17,16 @@ import sh.chuu.mc.beaconshrine.BeaconShrine;
 public interface ShrineParticles {
     double ATTUNING_PARTICLE_RATE = Math.PI/10;
 
-    static void spin() {
-        
+    static void shrineSpin(Location loc, Particle.DustOptions color, int radius, int step) {
+        double y = loc.getY() + 0.5;
+        double dx = Math.cos(step * 0.1) * radius;
+        double dz = Math.sin(step * 0.1) * radius;
+        double x1 = loc.getX() + dx;
+        double x2 = loc.getX() - dx;
+        double z1 = loc.getZ() + dz;
+        double z2 = loc.getZ() - dz;
+        loc.getWorld().spawnParticle(Particle.REDSTONE, x1, y, z1, 3, color);
+        loc.getWorld().spawnParticle(Particle.REDSTONE, x2, y, z2, 3, color);
     }
 
     static void beam(Location person, Vector v, Particle.DustOptions color) {

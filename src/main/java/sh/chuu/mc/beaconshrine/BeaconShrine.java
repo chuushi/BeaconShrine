@@ -11,7 +11,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import sh.chuu.mc.beaconshrine.listeners.LoreItemUseEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.listeners.ShrineEvents;
-import sh.chuu.mc.beaconshrine.shrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 
@@ -56,6 +55,12 @@ public class BeaconShrine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(cloudManager, this);
         getServer().getPluginManager().registerEvents(new ShrineEvents(), this);
         getServer().getPluginManager().registerEvents(new LoreItemUseEvents(), this);
+
+        shrineManager.getShrines().values().forEach(s -> {
+            if (!s.hasParticles() && s.getWorld().isChunkLoaded(s.x() >> 4, s.z() >> 4) && s.isValid()) {
+                s.startParticles();
+            }
+        });
     }
 
     @Override

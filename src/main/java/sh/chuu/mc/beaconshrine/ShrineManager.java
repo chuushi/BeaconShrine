@@ -1,4 +1,4 @@
-package sh.chuu.mc.beaconshrine.shrine;
+package sh.chuu.mc.beaconshrine;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -20,7 +20,8 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
+import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
 import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
 
 import java.io.File;
@@ -40,14 +41,8 @@ public class ShrineManager {
     private final Set<Player> warping = new LinkedHashSet<>();
     private int nextId = 0;
 
-    public static class GuiView {
-        public final ShrineMultiblock shrine;
-        public final GuiType type;
-
-        private GuiView(ShrineMultiblock shrine, GuiType type) {
-            this.shrine = shrine;
-            this.type = type;
-        }
+    public record GuiView(ShrineMultiblock shrine,
+                          GuiType type) {
     }
 
     public enum GuiType {
@@ -139,6 +134,7 @@ public class ShrineManager {
                     ShrineParticles.attuneBoom(initLoc, shrine.color());
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuned with " + shrine.name()).create());
+                    shrine.startParticles();
                 } else if (step%20 == 0) {
                     int secs = step /20;
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
@@ -149,15 +145,15 @@ public class ShrineManager {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
-    boolean warpContains(Player p) {
+    public boolean warpContains(Player p) {
         return warping.contains(p);
     }
 
-    void warpAdd(Player p) {
+    public void warpAdd(Player p) {
         warping.add(p);
     }
 
-    void warpDone(Player p) {
+    public void warpDone(Player p) {
         warping.remove(p);
     }
 
@@ -304,5 +300,9 @@ public class ShrineManager {
 
     public ShrineMultiblock getShrine(int id) {
         return shrines.get(id);
+    }
+
+    public Map<Integer, ShrineMultiblock> getShrines() {
+        return shrines;
     }
 }

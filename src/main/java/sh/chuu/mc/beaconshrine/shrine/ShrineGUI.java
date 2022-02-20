@@ -180,7 +180,7 @@ public class ShrineGUI {
         }
     }
 
-    static String warpTimeLeft(long diff) {
+    public static String warpTimeLeft(long diff) {
         if (diff > 60000) {
             long ret = (diff/60000) + 1;
             return "You can warp in " + ret + " minutes";

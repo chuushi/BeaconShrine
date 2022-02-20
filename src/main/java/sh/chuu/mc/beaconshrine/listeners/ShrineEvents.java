@@ -29,7 +29,7 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
-import sh.chuu.mc.beaconshrine.shrine.ShrineManager;
+import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
@@ -113,7 +113,7 @@ public class ShrineEvents implements Listener {
         Player p = (Player) ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
         ShrineManager.GuiView gui = manager.getGuiView(p);
-        if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
+        if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
             return;
 
         if (ev.getClick().isShiftClick()) {
@@ -124,12 +124,12 @@ public class ShrineEvents implements Listener {
         ItemStack item = ev.getCurrentItem();
         boolean isTopInv = inv == ev.getView().getTopInventory();
 
-        if (gui.type == ShrineManager.GuiType.WARP_LIST) {
+        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
             if (ev.isRightClick() && isTopInv) {
                 ev.setCancelled(true);
                 int clickId = ShrineGUI.getWarpIdGui(item);
                 if (clickId != -1) {
-                    manager.clickedWarpGui(p, clickId, gui.shrine);
+                    manager.clickedWarpGui(p, clickId, gui.shrine());
                 }
                 return;
             }
@@ -149,8 +149,8 @@ public class ShrineEvents implements Listener {
         ev.setCancelled(true);
         if (item == null) return;
 
-        if (gui.type == ShrineManager.GuiType.HOME) {
-            manager.clickedGui(gui.shrine.id(), item, p);
+        if (gui.type() == ShrineManager.GuiType.HOME) {
+            manager.clickedGui(gui.shrine().id(), item, p);
         }
     }
 
@@ -159,10 +159,10 @@ public class ShrineEvents implements Listener {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getView().getTopInventory();
         ShrineManager.GuiView gui = manager.getGuiView(he);
-        if (gui == null || gui.type == ShrineManager.GuiType.SHOP)
+        if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
             return;
 
-        if (gui.type == ShrineManager.GuiType.WARP_LIST) {
+        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
             ev.setCancelled(true);
             return;
         }
@@ -184,7 +184,7 @@ public class ShrineEvents implements Listener {
         Inventory inv = view.getTopInventory();
 
         if (gui != null) {
-            if (gui.type == ShrineManager.GuiType.WARP_LIST) {
+            if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
                 // account for the item that may have been on the hand
                 ItemStack cursor = view.getCursor();
                 if (cursor != null && ShrineGUI.isWarpGui(cursor)) {
@@ -193,7 +193,7 @@ public class ShrineEvents implements Listener {
                 }
 
                 List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
-                List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine.id());
+                List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine().id());
 
                 if (oldList.equals(newList)) return;
 

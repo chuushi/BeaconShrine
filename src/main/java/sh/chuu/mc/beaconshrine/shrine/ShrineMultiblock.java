@@ -24,6 +24,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineItemStack;
+import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
@@ -60,6 +61,7 @@ public class ShrineMultiblock {
     private int scrollTotalPurchases;
     private Player trader = null;
     private Merchant merchant = null;
+    private BukkitRunnable particles;
 
     /**
      * When creating this, assert that ShulkerBox shulker.getCustomName() is not null.
@@ -110,6 +112,37 @@ public class ShrineMultiblock {
 
         String symIT = cs.getString("symIT");
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
+    }
+
+    public void startParticles() {
+        if (particles != null)
+            particles.cancel();
+
+        particles = new BukkitRunnable() {
+            private int step = 0;
+            private final double px = x + 0.5d;
+            private final double py = shulkerY;
+            private final double pz = z + 0.5d;
+            @Override
+            public void run() {
+                ShrineParticles.shrineSpin(new Location(w, px, py, pz), getDustOptions(), 5, step++);
+                if (step == Integer.MAX_VALUE)
+                    step = 0;
+            }
+        };
+
+        particles.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
+    }
+
+    public void endParticles() {
+        if (particles != null) {
+            particles.cancel();
+            particles = null;
+        }
+    }
+
+    public boolean hasParticles() {
+        return particles != null;
     }
 
     public ItemStack createShireActivatorItem() {
@@ -185,7 +218,7 @@ public class ShrineMultiblock {
         return id;
     }
 
-    Player trader() {
+    public Player trader() {
         return trader;
     }
 
@@ -217,12 +250,12 @@ public class ShrineMultiblock {
         return new Particle.DustOptions(color(), 1);
     }
 
-    Inventory getInventory() {
+    public Inventory getInventory() {
         BlockState state = w.getBlockAt(x, shulkerY, z).getState();
         return state instanceof ShulkerBox ? ((ShulkerBox) state).getInventory() : null;
     }
 
-    Inventory getGui(Player p) {
+    public Inventory getGui(Player p) {
         ShulkerBox invState = (ShulkerBox) w.getBlockAt(x, shulkerY, z).getState();
 
         // Start making inventory
@@ -238,7 +271,7 @@ public class ShrineMultiblock {
         return gui;
     }
 
-    void openMerchant(Player p) {
+    public void openMerchant(Player p) {
         if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > ShrineGUI.RESTOCK_TIMER) {
             scrollUses = 0;
             firstTradeTime = 0;
@@ -254,7 +287,7 @@ public class ShrineMultiblock {
         p.openMerchant(merchant, true);
     }
 
-    void closeMerchant(Player p) {
+    public void closeMerchant(Player p) {
         if (trader != p) return;
         int uses = merchant.getRecipe(0).getUses();
         if (uses != scrollUses) {
@@ -270,7 +303,7 @@ public class ShrineMultiblock {
         return BeaconShireItemUtils.createWarpScroll(id, name, chatColor, p);
     }
 
-    ItemStack createWarpScrollGuiItem(boolean urHere) {
+    public ItemStack createWarpScrollGuiItem(boolean urHere) {
         return ShrineGUI.createWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
@@ -388,7 +421,7 @@ public class ShrineMultiblock {
         return new Location(w, x + 0.5, shulkerY + 0.5, z + 0.5);
     }
 
-    void save(ConfigurationSection cs) {
+    public void save(ConfigurationSection cs) {
         cs.set("name", name);
         cs.set("color", color == null ? null : color.toString());
         cs.set("world", w.getName());
