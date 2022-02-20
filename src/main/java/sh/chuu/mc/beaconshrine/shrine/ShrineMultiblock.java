@@ -27,6 +27,7 @@ import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
+import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
 
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
@@ -348,6 +349,8 @@ public class ShrineMultiblock {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
                         //noinspection ConstantConditions
                         loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
+                    } else if (i == 2) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1, false, false, false));
                     } else if (i == 0) {
                         Location to = p.getLocation();
                         to.setX(newX);
@@ -400,7 +403,7 @@ public class ShrineMultiblock {
     /**
      * This assumes that a Shulker box exists as an inventory
      */
-    void putShrineItem() {
+    public void putShrineItem() {
         getInventory().addItem(createShireActivatorItem());
     }
 }

@@ -1,4 +1,4 @@
-package sh.chuu.mc.beaconshrine.shrine;
+package sh.chuu.mc.beaconshrine.listeners;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -28,6 +28,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
+import sh.chuu.mc.beaconshrine.shrine.ShrineManager;
+import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.List;

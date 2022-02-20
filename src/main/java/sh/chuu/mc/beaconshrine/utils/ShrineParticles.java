@@ -1,6 +1,11 @@
-package sh.chuu.mc.beaconshrine.shrine;
+package sh.chuu.mc.beaconshrine.utils;
 
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;

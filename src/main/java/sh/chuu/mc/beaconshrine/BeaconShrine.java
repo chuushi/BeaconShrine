@@ -10,7 +10,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.chuu.mc.beaconshrine.listeners.LoreItemUseEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
-import sh.chuu.mc.beaconshrine.shrine.ShrineEvents;
+import sh.chuu.mc.beaconshrine.listeners.ShrineEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;

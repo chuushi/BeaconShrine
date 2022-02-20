@@ -21,6 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,9 +40,9 @@ public class ShrineManager {
     private final Set<Player> warping = new LinkedHashSet<>();
     private int nextId = 0;
 
-    static class GuiView {
-        final ShrineMultiblock shrine;
-        final GuiType type;
+    public static class GuiView {
+        public final ShrineMultiblock shrine;
+        public final GuiType type;
 
         private GuiView(ShrineMultiblock shrine, GuiType type) {
             this.shrine = shrine;
@@ -49,7 +50,7 @@ public class ShrineManager {
         }
     }
 
-    enum GuiType {
+    public enum GuiType {
         HOME, SHOP, WARP_LIST;
         // TODO add GUI types + Link it with shrine ID stuffs
     }
@@ -76,7 +77,7 @@ public class ShrineManager {
         return nextId;
     }
 
-    ShrineMultiblock newShrine(ShulkerBox s, Beacon b) {
+    public ShrineMultiblock newShrine(ShulkerBox s, Beacon b) {
         ShrineMultiblock ret = new ShrineMultiblock(nextId, s, b);
         shrines.put(nextId, ret);
         nextId++;
@@ -91,7 +92,7 @@ public class ShrineManager {
         return true;
     }
 
-    boolean openShrineGui(Player p, int id) {
+    public boolean openShrineGui(Player p, int id) {
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
             doAttuneAnimation(p, id);
             return true;
@@ -181,7 +182,7 @@ public class ShrineManager {
         return ret;
     }
 
-    GuiView closeShrineGui(HumanEntity p) {
+    public GuiView closeShrineGui(HumanEntity p) {
         @SuppressWarnings("SuspiciousMethodCalls")
         GuiView gui = whichGui.remove(p);
         if (gui == null)
@@ -192,7 +193,7 @@ public class ShrineManager {
         return gui;
     }
 
-    GuiView getGuiView(HumanEntity p) {
+    public GuiView getGuiView(HumanEntity p) {
         //noinspection SuspiciousMethodCalls
         return whichGui.get(p);
     }
@@ -261,7 +262,7 @@ public class ShrineManager {
             getShrine(id).warpPlayer(p, guiShrine);
     }
 
-    ShrineMultiblock updateShrine(int id, ShulkerBox s) {
+    public ShrineMultiblock updateShrine(int id, ShulkerBox s) {
         if (id == -1 || s.getCustomName() == null)
             return null;
         ShrineMultiblock shrine = shrines.get(id);
