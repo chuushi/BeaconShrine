@@ -32,7 +32,7 @@ import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.List;
 
-import static sh.chuu.mc.beaconshrine.Vars.*;
+import static sh.chuu.mc.beaconshrine.Vars.INGOT_ITEM_TYPE;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -210,13 +210,18 @@ public class ShrineEvents implements Listener {
 
     private ShulkerBox getValidShulkerNear(Block center, int tier) {
         ShulkerBox ret = null;
-        for (Block b : BlockUtils.getSurroundingInBeaconBeam(center, ShrineMultiblock.RADIUS, tier)) {
+        for (Block b : BlockUtils.getSurrounding(center, ShrineMultiblock.RADIUS)) {
             BlockState state = b.getState();
-            if (state instanceof ShulkerBox && ((ShulkerBox) state).getCustomName() != null) {
+            if (state instanceof ShulkerBox sb
+                    && sb.getCustomName() != null
+                    && BlockUtils.getBeaconBelow(b, tier) != null
+            ) {
                 // prevent counting in when there's more than two shulker boxes on the beacon beam(s)
-                if (ret != null)
+                if (ret != null) {
                     return null;
-                ret = (ShulkerBox) state;
+                }
+                ret = sb;
+
             }
         }
         return ret;

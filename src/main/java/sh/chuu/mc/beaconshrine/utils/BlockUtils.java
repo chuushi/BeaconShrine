@@ -25,7 +25,7 @@ public class BlockUtils {
         };
     }
 
-    public static List<Block> getSurroundingInBeaconBeam(Block b, int radius, int tier) {
+    public static List<Block> getSurrounding(Block b, int radius) {
         final World w = b.getWorld();
         final int x = b.getX();
         final int y = b.getY();
@@ -36,12 +36,8 @@ public class BlockUtils {
         final List<Block> ret = new ArrayList<>();
         for (int i = x - radius; i <= xh; i++) {
             for (int k = z - radius; k <= zh; k++) {
-                // Continue if only there's beacon below
-                // FIXME Might be more expensive than an alternative
-                if (getBeaconBelow(w.getBlockAt(i, y, k), tier) != null) {
-                    for (int j = y - radius; j <= yh; j++) {
-                        ret.add(w.getBlockAt(i, j, k));
-                    }
+                for (int j = y - radius; j <= yh; j++) {
+                    ret.add(w.getBlockAt(i, j, k));
                 }
             }
         }
