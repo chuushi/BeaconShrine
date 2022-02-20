@@ -18,22 +18,20 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
-import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class ShrineMultiblock {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -41,9 +39,10 @@ public class ShrineMultiblock {
     private static final BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
     private static final BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     private static final BaseComponent INVALID_WARPING = new TextComponent("Move to cancel the current warp first");
-    public static final Material BLOCK = Material.NETHERITE_BLOCK;
     private static final int WARP_COOLDOWN = 300000;
-    static final int RADIUS = 4;
+    public static final Material BLOCK = Material.NETHERITE_BLOCK;
+    public static final int RADIUS = 4;
+
     private final int id;
     private String name;
     private World w;
@@ -52,7 +51,7 @@ public class ShrineMultiblock {
     private int shulkerY;
     private int beaconY;
     private DyeColor color;
-    private ChatColor cc;
+    private ChatColor chatColor;
     private Material symbolItemType;
     private long firstTradeTime;
     private int scrollUses;
@@ -63,76 +62,79 @@ public class ShrineMultiblock {
 
     /**
      * When creating this, assert that ShulkerBox shulker.getCustomName() is not null.
-     * @param id
-     * @param shulker
-     * @param beacon
+     * @param id ID of the point
+     * @param shulker The Shulker box
+     * @param beacon The beacon block
      */
-    ShrineMultiblock(int id, ShulkerBox shulker, Beacon beacon, boolean dyed) {
+    public ShrineMultiblock(int id, ShulkerBox shulker, Beacon beacon) {
         this.id = id;
         this.beaconY = beacon == null ? -1 : beacon.getY();
         this.firstTradeTime = 0;
         this.scrollMax = 3;
         this.scrollUses = 0;
+        this.scrollTotalPurchases = 0;
 
-        DyeColor color = dyed ? shulker.getColor() : null;
-        setShulker(shulker.getWorld(), shulker.getX(), shulker.getZ(), shulker.getY(), shulker.getCustomName(), color);
-        setSymbolItemType(shulker.getInventory());
+        DyeColor color = shulker.getColor();
+        this.w = shulker.getWorld();
+        this.x = shulker.getX();
+        this.z = shulker.getZ();
+        this.shulkerY = shulker.getY();
+        this.name = shulker.getCustomName();
+        this.color = color;
+        this.chatColor = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
+        this.setSymbolItemType(shulker.getInventory());
     }
 
-    ShrineMultiblock(int id, ConfigurationSection cs) {
+    public ShrineMultiblock(int id, ConfigurationSection cs) {
         this.id = id;
         this.firstTradeTime = cs.getLong("scTime", 0);
         this.scrollMax = cs.getInt("scMax", 3);
         this.scrollUses = cs.getInt("scUses", 0);
         this.scrollTotalPurchases = cs.getInt("scPurch", 0);
+        //noinspection ConstantConditions
+        this.w = Bukkit.getWorld(cs.getString("world"));
 
-        String name = cs.getString("name");
-        String colorStr = cs.getString("color");
-        DyeColor color = colorStr == null ? null : DyeColor.valueOf(colorStr);
-        World w = Bukkit.getWorld(cs.getString("world"));
         Iterator<Integer> loc = cs.getIntegerList("loc").iterator();
-        int x = loc.next();
-        int z = loc.next();
-        int shulkerY = loc.next();
+        this.x = loc.next();
+        this.z = loc.next();
+        this.shulkerY = loc.next();
         this.beaconY = loc.next();
 
-        setShulker(w, x, z, shulkerY, name, color);
+        this.name = cs.getString("name");
+
+        String colorStr = cs.getString("color");
+        DyeColor color = colorStr == null ? null : DyeColor.valueOf(colorStr);
+        this.color = color;
+        this.chatColor = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
+
         String symIT = cs.getString("symIT");
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
     }
 
     public ItemStack createShireActivatorItem() {
-        return createShrineActivatorItem(name, cc, id, x, z);
+        return ShrineItemStack.createShrineActivatorItem(name, chatColor, id, x, z);
     }
 
-    int distanceSquaredXZ(int x, int z) {
+    public int distanceSquaredXZ(int x, int z) {
         x -= this.x;
         z -= this.z;
         return x*x + z*z;
     }
 
-    void updateShulker(ShulkerBox s, boolean dyed) {
-        setShulker(s.getWorld(), s.getX(), s.getZ(), s.getY(), s.getCustomName(), dyed ? s.getColor() : null);
+    public void setShulker(ShulkerBox s, boolean dyed) {
+        this.w = s.getWorld();
+        this.x = s.getX();
+        this.z = s.getZ();
+        this.shulkerY = s.getY();
+        this.name = s.getCustomName();
+        this.color = dyed ? s.getColor() : null;
+        this.chatColor = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
         this.beaconY = -1;
     }
 
-    private void setShulker(World w, int x, int z, int shulkerY, String name, DyeColor color) {
-        this.w = w;
-        this.x = x;
-        this.z = z;
-        this.name = name;
-        this.color = color;
-        this.cc = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
-        this.shulkerY = shulkerY;
-    }
-
-    public void updateSymbolItemType(Inventory inv) {
-        setSymbolItemType(inv);
-    }
-
-    private void setSymbolItemType(Inventory inv) {
+    public void setSymbolItemType(Inventory inv) {
         for (ItemStack item : inv) {
-            if (item == null || item.getType() == INGOT_ITEM_TYPE && ShrineGuiLores.getShrineId(item) != -1)
+            if (item == null || item.getType() == INGOT_ITEM_TYPE && ShrineGUI.getShrineId(item) != -1)
                 continue;
             this.symbolItemType = item.getType();
             return;
@@ -151,13 +153,14 @@ public class ShrineMultiblock {
     public boolean isValid() {
         Block shulkerBlock = w.getBlockAt(x, shulkerY, z);
         BlockState shulkerData = shulkerBlock.getState();
-        if (!(shulkerData instanceof ShulkerBox) || this.id != getShrineId(((ShulkerBox) shulkerData).getInventory()))
+        if (!(shulkerData instanceof ShulkerBox) || this.id != ShrineGUI.getShrineId(((ShulkerBox) shulkerData).getInventory()))
             return false;
 
         BlockState beaconState = beaconY == -1 ? null : w.getBlockAt(x, beaconY, z).getState();
         Beacon beacon;
         if (beaconState instanceof Beacon) {
             beacon = (Beacon) beaconState;
+            // TODO Implement beacon beam obstruction detection code
             if (beacon.getTier() < 4) return false;
         } else {
             beacon = BlockUtils.getBeaconBelow(shulkerBlock.getRelative(BlockFace.DOWN, 3), 4);
@@ -177,11 +180,11 @@ public class ShrineMultiblock {
         return false;
     }
 
-    public int getId() {
+    public int id() {
         return id;
     }
 
-    Player getTrader() {
+    Player trader() {
         return trader;
     }
 
@@ -189,28 +192,28 @@ public class ShrineMultiblock {
         return w;
     }
 
-    public int getX() {
+    public int x() {
         return x;
     }
 
-    public int getShulkerY() {
+    public int shulkerY() {
         return shulkerY;
     }
 
-    public int getZ() {
+    public int z() {
         return z;
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public Color getColor() {
+    public Color color() {
         return color == null ? Color.WHITE : color.getColor();
     }
 
     public Particle.DustOptions getDustOptions() {
-        return new Particle.DustOptions(getColor(), 1);
+        return new Particle.DustOptions(color(), 1);
     }
 
     Inventory getInventory() {
@@ -219,54 +222,23 @@ public class ShrineMultiblock {
     }
 
     Inventory getGui(Player p) {
-        // TODO figure out if setting material is required (ItemMeta contains item info)
-        ItemStack shulker = new ItemStack(BlockUtils.getShulkerBoxFromDyeColor(color));
-        BlockStateMeta m = (BlockStateMeta) shulker.getItemMeta();
-        ShulkerBox state = (ShulkerBox) w.getBlockAt(x, shulkerY, z).getState();
-        boolean hasEnderChest = state.getInventory().contains(Material.ENDER_CHEST);
+        ShulkerBox invState = (ShulkerBox) w.getBlockAt(x, shulkerY, z).getState();
 
-        m.setBlockState(state);
-        m.setDisplayName(ChatColor.YELLOW + "Open Shrine Shulker Box");
-        shulker.setItemMeta(m);
+        // Start making inventory
+        Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, chatColor + name);
+        gui.setItem(0, ShrineGUI.shulkerBox(invState, color));
+        gui.setItem(2, ShrineGUI.CLOUD_CHEST_ITEM);
+        gui.setItem(4, ShrineGUI.WARP_LIST_ITEM);
+        // FIXME Shop Item amount desync (shows 0) after fully restocked
+        gui.setItem(7, ShrineGUI.createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
 
-        Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, cc + name);
-        gui.setItem(0, shulker);
-        gui.setItem(2, CLOUD_CHEST_ITEM);
-        gui.setItem(4, WARP_LIST_ITEM);
-        gui.setItem(7, createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
-        if (hasEnderChest) gui.setItem(1, ENDER_CHEST_ITEM);
-//        ItemStack[] c = plugin.getCloudManager().getInventoryContents(p);
-//        if (c != null && c.length == 45) {
-//            // set non-consuming teleportation
-//            setQuickTeleportItem(gui, 3, p, c[42]);
-//            setQuickTeleportItem(gui, 4, p, c[43]);
-//            setQuickTeleportItem(gui, 5, p, c[44]);
-//        }
+        // Add Ender Chest if it exists in Shulker inventory
+        if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(1, ShrineGUI.ENDER_CHEST_ITEM);
         return gui;
     }
 
-    private void setQuickTeleportItem(Inventory gui, int index, Player p, ItemStack scroll) {
-        BeaconShireItemUtils.WarpScroll ws = BeaconShireItemUtils.getWarpScrollData(scroll);
-        if (ws != null && ws.owner.equals(p.getUniqueId())) {
-            ItemStack i = scroll.clone();
-            ItemMeta im = i.getItemMeta();
-            if (this.id == ws.id) {
-                //noinspection ConstantConditions if ws exists, im also exists
-                im.setLore(ImmutableList.of(ChatColor.GRAY + "You are here"));
-            } else {
-                //noinspection ConstantConditions if ws exists, im also exists
-                List<String> l = im.getLore();
-                //noinspection ConstantConditions if ws exists, l also exists
-                l.set(2, ChatColor.YELLOW + "Right click to warp");
-                im.setLore(l);
-            }
-            i.setItemMeta(im);
-            gui.setItem(index, i);
-        }
-    }
-
     void openMerchant(Player p) {
-        if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > RESTOCK_TIMER) {
+        if (scrollUses != 0 && System.currentTimeMillis() - firstTradeTime > ShrineGUI.RESTOCK_TIMER) {
             scrollUses = 0;
             firstTradeTime = 0;
             // Incrase max based on this curve
@@ -277,11 +249,7 @@ public class ShrineMultiblock {
         trader = p;
         MerchantRecipe recipe = new MerchantRecipe(createShireWarpItem(p), scrollUses, scrollMax, false);
         recipe.addIngredient(new ItemStack(Material.DIAMOND, 2));
-        if (true) {
-            merchant.setRecipes(ImmutableList.of(recipe));
-        } else {
-            merchant.setRecipes(ImmutableList.of(recipe));
-        }
+        merchant.setRecipes(ImmutableList.of(recipe));
         p.openMerchant(merchant, true);
     }
 
@@ -298,11 +266,11 @@ public class ShrineMultiblock {
     }
 
     private ItemStack createShireWarpItem(Player p) {
-        return BeaconShireItemUtils.createWarpScroll(id, name, cc, p);
+        return BeaconShireItemUtils.createWarpScroll(id, name, chatColor, p);
     }
 
     ItemStack createWarpScrollGuiItem(boolean urHere) {
-        return ShrineGuiLores.createWarpGui(id, name, symbolItemType, cc, urHere);
+        return ShrineGUI.createWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
     public CompletableFuture<Boolean> warpPlayer(Player p, ShrineMultiblock from) {
@@ -325,7 +293,7 @@ public class ShrineMultiblock {
             }
             boolean isNether = w.getEnvironment() == World.Environment.NETHER;
             if (isNether) {
-                Block b = w.getBlockAt(x, getShulkerY() + 2, z);
+                Block b = w.getBlockAt(x, shulkerY() + 2, z);
                 int air = 8;
                 while (b.getY() < 124 && air != 0) {
                     if (b.isPassable()) air--;
@@ -362,7 +330,7 @@ public class ShrineMultiblock {
                 final double x = pLoc.getX();
                 final double y = pLoc.getY();
                 final double z = pLoc.getZ();
-                final Color c = getColor();
+                final Color c = color();
 
                 @Override
                 public void run() {
@@ -378,6 +346,7 @@ public class ShrineMultiblock {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
                     } else if (i == 10) {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
+                        //noinspection ConstantConditions
                         loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
                     } else if (i == 0) {
                         Location to = p.getLocation();
@@ -428,6 +397,9 @@ public class ShrineMultiblock {
         cs.set("scPurch", scrollTotalPurchases);
     }
 
+    /**
+     * This assumes that a Shulker box exists as an inventory
+     */
     void putShrineItem() {
         getInventory().addItem(createShireActivatorItem());
     }

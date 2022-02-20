@@ -2,34 +2,32 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatColor;
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ShrineGuiLores {
+import static sh.chuu.mc.beaconshrine.Vars.*;
+
+public class ShrineGUI {
     public static final ItemStack CLOUD_CHEST_ITEM;
     public static final ItemStack SHOP_ITEM;
     public static final ItemStack ENDER_CHEST_ITEM;
     public static final ItemStack WARP_LIST_ITEM;
-    public static final Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
-    public static final Material SHOP_ITEM_TYPE = Material.EMERALD;
-    public static final Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
-    public static final Material WARP_LIST_ITEM_TYPE = Material.SKULL_BANNER_PATTERN;
-    public static final Material WARP_SCROLL_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
-    public static final Material INGOT_ITEM_TYPE = Material.NETHERITE_INGOT;
-    static final long RESTOCK_TIMER = 7200000; // 2 hours
-    private static final String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
-    private static final String SHIRE_YOU_ARE_HERE = ChatColor.GRAY + "You are here";
+    static final long RESTOCK_TIMER = 3600000; // 1 hour
 
     static {
         CLOUD_CHEST_ITEM = createGuiItem("Open Personal Cloud Chest",
@@ -62,21 +60,16 @@ public class ShrineGuiLores {
         return ret;
     }
 
-    public static ItemStack createShrineActivatorItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
-        ItemStack ret = new ItemStack(INGOT_ITEM_TYPE);
-        ItemMeta im = ret.getItemMeta();
-        if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
-        String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
-        im.setDisplayName(color + "Shrine Activator");
-        im.setLore(ImmutableList.of(
-                color + name,
-                SHIRE_ID_HEADER + id,
-                ChatColor.DARK_GRAY + "at " + x + ", " + z
-        ));
-        im.addEnchant(Enchantment.DURABILITY, 1, true);
-        im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        ret.setItemMeta(im);
-        return ret;
+    public static ItemStack shulkerBox(BlockState inventoryState, DyeColor color) {
+        // TODO figure out if setting material is required (ItemMeta contains item info)
+        ItemStack shulker = new ItemStack(BlockUtils.getShulkerBoxFromDyeColor(color));
+
+        BlockStateMeta m = (BlockStateMeta) shulker.getItemMeta();
+        m.setBlockState(inventoryState);
+        m.setDisplayName(ChatColor.YELLOW + "Open Shrine Shulker Box");
+        shulker.setItemMeta(m);
+
+        return shulker;
     }
 
     public static ItemStack createWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
@@ -210,6 +203,6 @@ public class ShrineGuiLores {
     }
 
     public static void clickNoise(Player p) {
-        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.3f, 1f);
+        p.playSound(p, Sound.UI_BUTTON_CLICK, 0.25f, 1f);
     }
 }

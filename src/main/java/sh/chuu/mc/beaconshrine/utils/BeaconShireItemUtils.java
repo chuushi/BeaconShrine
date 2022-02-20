@@ -1,14 +1,8 @@
 package sh.chuu.mc.beaconshrine.utils;
 
 import com.google.common.collect.ImmutableList;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -17,16 +11,9 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
-import sh.chuu.mc.beaconshrine.BeaconShrine;
-import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
-import sh.chuu.mc.beaconshrine.shrine.ShrineParticles;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class BeaconShireItemUtils {
     public static final Material WARP_SCROLL_MATERIAL = Material.FLOWER_BANNER_PATTERN;
@@ -90,14 +77,6 @@ public class BeaconShireItemUtils {
                 UUID.fromString(lore.get(3).substring(WARP_SCROLL_UUID_PREFIX.length())));
     }
 
-    @Immutable
-    public static class WarpScroll {
-        public final int id;
-        public final UUID owner;
-
-        private WarpScroll(int id, UUID owner) {
-            this.id = id;
-            this.owner = owner;
-        }
+    public record WarpScroll(int id, UUID owner) {
     }
 }

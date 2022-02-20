@@ -9,14 +9,14 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 
-public class ShrineParticles {
-    private static final double ATTUNING_PARTICLE_RATE = Math.PI/10;
+public interface ShrineParticles {
+    double ATTUNING_PARTICLE_RATE = Math.PI/10;
 
-    public static void spin() {
+    static void spin() {
         
     }
 
-    public static void beam(Location person, Vector v, Particle.DustOptions color) {
+    static void beam(Location person, Vector v, Particle.DustOptions color) {
         final int interval = (int) v.length() * 4;
         Vector inc = v.clone().divide(new Vector(interval, interval, interval));
         Location loc = person.clone();
@@ -27,7 +27,7 @@ public class ShrineParticles {
         }
     }
 
-    public static void attuning(Location person, Vector v, Particle.DustOptions color, int step) {
+    static void attuning(Location person, Vector v, Particle.DustOptions color, int step) {
         double m = (Math.sin(step * ATTUNING_PARTICLE_RATE) + 1)/2;
         double x = person.getX() + v.getX() * m;
         double y = person.getY() + v.getY() * m;
@@ -37,20 +37,20 @@ public class ShrineParticles {
             particleAroundPlayer(person, color, step);
     }
 
-    public static void attuneBoom(Location loc, Color color) {
+    static void attuneBoom(Location loc, Color color) {
         boom(loc, color, FireworkEffect.Type.BALL);
     }
 
-    public static void warpWarmUp(Location loc, Particle.DustOptions color, int step) {
+    static void warpWarmUp(Location loc, Particle.DustOptions color, int step) {
         loc.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, loc, 1);
         particleAroundPlayer(loc, color, step);
     }
 
-    public static void warpBoom(Location loc, Color color) {
+    static void warpBoom(Location loc, Color color) {
         boom(loc, color, FireworkEffect.Type.BALL_LARGE);
     }
 
-    public static void boom(Location loc, Color color, FireworkEffect.Type type) {
+    static void boom(Location loc, Color color, FireworkEffect.Type type) {
         Firework boom = (Firework) loc.getWorld().spawnEntity(loc, EntityType.FIREWORK);
         FireworkMeta bm = boom.getFireworkMeta();
         bm.addEffect(FireworkEffect.builder().with(type).withColor(color).withFade(Color.GRAY).withFlicker().build());
@@ -61,15 +61,15 @@ public class ShrineParticles {
         boom.detonate();
     }
 
-    public static void shrineIgnitionSound(Player p) {
+    static void shrineIgnitionSound(Player p) {
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 1, 1);
     }
 
-    public static void paperIgnitionSound(Player p) {
+    static void paperIgnitionSound(Player p) {
         p.getWorld().playSound(p.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 1, 1);
     }
 
-    public static Vector getDiff(int x, int y, int z, Location pl) {
+    static Vector getDiff(int x, int y, int z, Location pl) {
         return new Vector(x + 0.5, y + 0.5, z + 0.5)
                 .subtract(pl.toVector());
     }

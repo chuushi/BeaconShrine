@@ -5,11 +5,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-import sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores;
+import sh.chuu.mc.beaconshrine.listeners.LoreItemUseEvents;
+import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.shrine.ShrineEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
@@ -21,13 +21,10 @@ import java.util.List;
 import java.util.logging.Level;
 
 public class BeaconShrine extends JavaPlugin {
-    static final String REFRESH_ENABLED_NODE = "refresh-check.enabled";
-    static final String REFRESH_TIME_NODE = "refresh-check.time";
-
     private static BeaconShrine instance = null;
+
     private CloudManager cloudManager = null;
     private ShrineManager shrineManager = null;
-    private RefreshChecker refreshChecker = null;
 
     public static BeaconShrine getInstance() {
         return BeaconShrine.instance;
@@ -46,17 +43,19 @@ public class BeaconShrine extends JavaPlugin {
         BeaconShrine.instance = this;
         saveDefaultConfig();
         cloudManager = new CloudManager();
-        getServer().getPluginManager().registerEvents(cloudManager, this);
+
         try {
             shrineManager = new ShrineManager();
-            getServer().getPluginManager().registerEvents(new ShrineEvents(), this);
         } catch (IOException e) {
             getLogger().log(Level.SEVERE, "Could not load Shrine storage", e);
+            getPluginLoader().disablePlugin(this);
+            return;
         }
-        getServer().getPluginManager().registerEvents(new LoreItemClickEvents(), this);
 
-        if (getConfig().getBoolean(REFRESH_ENABLED_NODE))
-            getServer().getPluginManager().registerEvents(refreshChecker = new RefreshChecker(), this);
+        // Events
+        getServer().getPluginManager().registerEvents(cloudManager, this);
+        getServer().getPluginManager().registerEvents(new ShrineEvents(), this);
+        getServer().getPluginManager().registerEvents(new LoreItemUseEvents(), this);
     }
 
     @Override
@@ -65,15 +64,11 @@ public class BeaconShrine extends JavaPlugin {
         shrineManager.onDisable();
         cloudManager = null;
         shrineManager = null;
-        refreshChecker = null;
+        BeaconShrine.instance = null;
         saveConfig();
     }
 
     private static final String MANAGE_PERM = "beaconshrine.admin";
-    private static final String REFRESH_CMD = "refreshcheck";
-    private static final String REFRESH_ENABLE_CMD = "enable";
-    private static final String REFRESH_DISABLE_CMD = "disable";
-    private static final String REFRESH_SETTIME_CMD = "settime";
     private static final String SHRINE_CMD = "shrine";
     private static final String SHRINE_DELETE_CMD = "delete";
     private static final String SHRINE_SETID_CMD = "setid";
@@ -86,42 +81,7 @@ public class BeaconShrine extends JavaPlugin {
             return true;
         }
 
-        if (args[0].equalsIgnoreCase(REFRESH_CMD)) {
-            if (args.length == 1) {
-                sender.sendMessage(String.format("Subcommands: %s %s %s", REFRESH_ENABLE_CMD, REFRESH_DISABLE_CMD, REFRESH_SETTIME_CMD));
-                return true;
-            }
-
-            boolean enabled = getConfig().getBoolean(REFRESH_ENABLED_NODE, false);
-
-            if (args[1].equalsIgnoreCase(REFRESH_ENABLE_CMD)) {
-                if (enabled) {
-                    sender.sendMessage("Refresh is already enabled");
-                } else {
-                    getConfig().set(REFRESH_ENABLED_NODE, true);
-                    getServer().getPluginManager().registerEvents(refreshChecker = new RefreshChecker(), this);
-                    sender.sendMessage("Refresh is now enabled");
-                }
-                return true;
-            }
-
-            if (args[1].equalsIgnoreCase(REFRESH_DISABLE_CMD)) {
-                if (!enabled) {
-                    sender.sendMessage("Refresh is already disabled");
-                } else {
-                    getConfig().set(REFRESH_ENABLED_NODE, false);
-                    HandlerList.unregisterAll(refreshChecker);
-                    refreshChecker = null;
-                    sender.sendMessage("Refresh is now disabled");
-                }
-                return true;
-            }
-
-            if (args[1].equalsIgnoreCase(REFRESH_SETTIME_CMD)) {
-                refreshChecker.setTime();
-                return true;
-            }
-        } else if (args[0].equalsIgnoreCase(SHRINE_CMD)) {
+        if (args[0].equalsIgnoreCase(SHRINE_CMD)) {
             if (args.length == 1) {
                 sender.sendMessage(String.format("Subcommands: %s %s", SHRINE_DELETE_CMD, SHRINE_SETID_CMD));
                 return true;
@@ -143,7 +103,7 @@ public class BeaconShrine extends JavaPlugin {
                 } else if (sender instanceof Player) {
                     Player p = (Player) sender;
                     ItemStack item = p.getInventory().getItemInMainHand();
-                    id = ShrineGuiLores.getShrineId(item);
+                    id = ShrineGUI.getShrineId(item);
                     if (id == -1) {
                         sender.sendMessage("This item doesn't contain shrine id information");
                         return true;
@@ -195,7 +155,7 @@ public class BeaconShrine extends JavaPlugin {
             }
         }
 
-        sender.sendMessage(String.format("Commands: %s %s", REFRESH_CMD, SHRINE_CMD));
+        sender.sendMessage("Commands: %s".formatted(SHRINE_CMD));
         return true;
     }
 
@@ -206,17 +166,12 @@ public class BeaconShrine extends JavaPlugin {
 
         if (args.length == 1) {
             List<String> ret = new ArrayList<>();
-            addIfStartsWith(ret, REFRESH_CMD, args[0]);
             addIfStartsWith(ret, SHRINE_CMD, args[0]);
             return ret;
         }
         if (args.length == 2) {
             List<String> ret = new ArrayList<>();
-            if (args[0].equalsIgnoreCase(REFRESH_CMD)) {
-                addIfStartsWith(ret, REFRESH_DISABLE_CMD, args[1]);
-                addIfStartsWith(ret, REFRESH_ENABLE_CMD, args[1]);
-                addIfStartsWith(ret, REFRESH_SETTIME_CMD, args[1]);
-            } else if (args[0].equalsIgnoreCase(SHRINE_CMD)) {
+            if (args[0].equalsIgnoreCase(SHRINE_CMD)) {
                 addIfStartsWith(ret, SHRINE_DELETE_CMD, args[1]);
                 addIfStartsWith(ret, SHRINE_SETID_CMD, args[1]);
             }

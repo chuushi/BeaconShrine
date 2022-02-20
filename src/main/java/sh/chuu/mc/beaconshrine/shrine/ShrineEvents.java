@@ -32,7 +32,7 @@ import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.List;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -47,7 +47,7 @@ public class ShrineEvents implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
-    public void shrineClick(PlayerInteractEvent ev) {
+    public void shrineClick(PlayerInteractEvent ev) { // FIXME Excessive Event Calls
         if (ev.getPlayer().isSneaking() || ev.useInteractedBlock() == Event.Result.DENY
                 || ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK)
             return;
@@ -60,13 +60,13 @@ public class ShrineEvents implements Listener {
                 ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
                 if (shulker != null) {
                     Inventory inv = shulker.getInventory();
-                    if (getShrineId(inv) == -1) {
+                    if (ShrineGUI.getShrineId(inv) == -1) {
                         // new shulker box
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
                         ShrineMultiblock shrine;
-                        int id = getShrineId(item);
+                        int id = ShrineGUI.getShrineId(item);
                         if ((shrine = manager.updateShrine(id, shulker)) == null) {
                             shrine = manager.newShrine(shulker, null);
                         }
@@ -85,7 +85,7 @@ public class ShrineEvents implements Listener {
         ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
         if (shulker == null) return;
 
-        int id = getShrineId(shulker.getInventory());
+        int id = ShrineGUI.getShrineId(shulker.getInventory());
         if (id != -1) {
             Player p = ev.getPlayer();
             if (!manager.openShrineGui(p, id))
@@ -98,9 +98,8 @@ public class ShrineEvents implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void shireShulkerPlace(BlockPlaceEvent ev) {
         BlockState d = ev.getBlock().getState();
-        if (d instanceof ShulkerBox) {
-            ShulkerBox sb = (ShulkerBox) d;
-            int id = getShrineId(sb.getInventory());
+        if (d instanceof ShulkerBox sb) {
+            int id = ShrineGUI.getShrineId(sb.getInventory());
             if (id != -1)
                 manager.updateShrine(id, sb);
         }
@@ -125,7 +124,7 @@ public class ShrineEvents implements Listener {
         if (gui.type == ShrineManager.GuiType.WARP_LIST) {
             if (ev.isRightClick() && isTopInv) {
                 ev.setCancelled(true);
-                int clickId = getWarpIdGui(item);
+                int clickId = ShrineGUI.getWarpIdGui(item);
                 if (clickId != -1) {
                     manager.clickedWarpGui(p, clickId, gui.shrine);
                 }
@@ -135,7 +134,7 @@ public class ShrineEvents implements Listener {
             ItemStack cursor = ev.getView().getCursor();
             if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
             if (cursor != null) {
-                boolean isWarpOnCursor = isWarpGui(cursor);
+                boolean isWarpOnCursor = ShrineGUI.isWarpGui(cursor);
                 if (isTopInv ^ isWarpOnCursor) {
                     ev.setCancelled(true);
                 }
@@ -148,7 +147,7 @@ public class ShrineEvents implements Listener {
         if (item == null) return;
 
         if (gui.type == ShrineManager.GuiType.HOME) {
-            manager.clickedGui(gui.shrine.getId(), item, p);
+            manager.clickedGui(gui.shrine.id(), item, p);
         }
     }
 
@@ -185,13 +184,13 @@ public class ShrineEvents implements Listener {
             if (gui.type == ShrineManager.GuiType.WARP_LIST) {
                 // account for the item that may have been on the hand
                 ItemStack cursor = view.getCursor();
-                if (cursor != null && isWarpGui(cursor)) {
+                if (cursor != null && ShrineGUI.isWarpGui(cursor)) {
                     inv.addItem(cursor);
                     view.setCursor(null);
                 }
 
                 List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
-                List<Integer> newList = ShrineGuiLores.getWarpOrderGui(inv, gui.shrine.getId());
+                List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine.id());
 
                 if (oldList.equals(newList)) return;
 
@@ -202,10 +201,10 @@ public class ShrineEvents implements Listener {
         }
 
         if (inv.getType() == InventoryType.SHULKER_BOX) {
-            int id = getShrineId(inv);
+            int id = ShrineGUI.getShrineId(inv);
             if (id == -1) return;
 
-            manager.getShrine(id).updateSymbolItemType(inv);
+            manager.getShrine(id).setSymbolItemType(inv);
         }
     }
 

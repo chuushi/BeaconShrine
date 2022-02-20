@@ -3,7 +3,10 @@ package sh.chuu.mc.beaconshrine.shrine;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -24,7 +27,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 
-import static sh.chuu.mc.beaconshrine.shrine.ShrineGuiLores.*;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class ShrineManager {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -51,7 +54,7 @@ public class ShrineManager {
         // TODO add GUI types + Link it with shrine ID stuffs
     }
 
-    public ShrineManager() throws IOException{
+    public ShrineManager() throws IOException {
         this.configFile = new File(plugin.getDataFolder(), "shrines.yml");
         if (!configFile.exists()) {
             configFile.createNewFile();
@@ -74,7 +77,7 @@ public class ShrineManager {
     }
 
     ShrineMultiblock newShrine(ShulkerBox s, Beacon b) {
-        ShrineMultiblock ret = new ShrineMultiblock(nextId, s, b, s.getType() != Material.SHULKER_BOX);
+        ShrineMultiblock ret = new ShrineMultiblock(nextId, s, b);
         shrines.put(nextId, ret);
         nextId++;
         return ret;
@@ -98,7 +101,7 @@ public class ShrineManager {
         if (s == null || !s.isValid()) return false;
 
         Location loc = p.getLocation();
-        Vector vector = ShrineParticles.getDiff(s.getX(), s.getShulkerY(), s.getZ(), loc);
+        Vector vector = ShrineParticles.getDiff(s.x(), s.shulkerY(), s.z(), loc);
         ShrineParticles.beam(loc, vector, s.getDustOptions());
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, GuiType.HOME));
@@ -116,7 +119,7 @@ public class ShrineManager {
             final double y = initLoc.getY();
             final double z = initLoc.getZ();
             final ShrineMultiblock shrine = getShrine(id);
-            final Vector vector = ShrineParticles.getDiff(shrine.getX(), shrine.getShulkerY(), shrine.getZ(), p.getLocation());
+            final Vector vector = ShrineParticles.getDiff(shrine.x(), shrine.shulkerY(), shrine.z(), p.getLocation());
             final Particle.DustOptions dustColor = shrine.getDustOptions();
             private int step = 100;
 
@@ -132,13 +135,13 @@ public class ShrineManager {
                     attuning.remove(p);
                     this.cancel();
                     plugin.getCloudManager().attuneShrine(p, id);
-                    ShrineParticles.attuneBoom(initLoc, shrine.getColor());
+                    ShrineParticles.attuneBoom(initLoc, shrine.color());
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                            new ComponentBuilder("Attuned with " + shrine.getName()).create());
+                            new ComponentBuilder("Attuned with " + shrine.name()).create());
                 } else if (step%20 == 0) {
                     int secs = step /20;
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                            new ComponentBuilder("Attuning with " + shrine.getName() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
+                            new ComponentBuilder("Attuning with " + shrine.name() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
                 }
                 ShrineParticles.attuning(initLoc, vector, dustColor, step--);
             }
@@ -198,7 +201,7 @@ public class ShrineManager {
         Material type = slot.getType();
         if (type == CLOUD_CHEST_ITEM_TYPE) {
             p.closeInventory();
-            clickNoise(p);
+            ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getCloudManager().openInventory(p), 1L);
             return;
         }
@@ -206,7 +209,7 @@ public class ShrineManager {
         if (type == WARP_LIST_ITEM_TYPE) {
             ShrineMultiblock shrine = shrines.get(id);
             p.closeInventory();
-            clickNoise(p);
+            ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
                 p.openInventory(getWarpGui(p, id));
@@ -216,18 +219,18 @@ public class ShrineManager {
 
         if (type == ENDER_CHEST_ITEM_TYPE) {
             p.closeInventory();
-            clickNoise(p);
+            ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(p.getEnderChest()), 1L);
             return;
         }
 
         if (type == SHOP_ITEM_TYPE) {
             ShrineMultiblock shrine = shrines.get(id);
-            if (shrine.getTrader() != null) {
+            if (shrine.trader() != null) {
                 return;
             }
             p.closeInventory();
-            clickNoise(p);
+            ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.SHOP));
                 shrine.openMerchant(p);
@@ -242,18 +245,18 @@ public class ShrineManager {
             if (bs instanceof ShulkerBox){
                 // Shulker box within
                 p.closeInventory();
-                clickNoise(p);
+                ShrineGUI.clickNoise(p);
                 Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrines.get(id).getInventory()), 1L);
             }
         }
     }
 
     public void clickedWarpGui(Player p, int id, ShrineMultiblock guiShrine) {
-        clickNoise(p);
+        ShrineGUI.clickNoise(p);
         p.closeInventory();
         long diff = plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
         if (diff > 0)
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGuiLores.warpTimeLeft(diff)));
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGUI.warpTimeLeft(diff)));
         else
             getShrine(id).warpPlayer(p, guiShrine);
     }
@@ -263,7 +266,7 @@ public class ShrineManager {
             return null;
         ShrineMultiblock shrine = shrines.get(id);
         if (shrine == null) return null;
-        shrine.updateShulker(s, s.getType() != Material.SHULKER_BOX);
+        shrine.setShulker(s, s.getType() != Material.SHULKER_BOX);
         return shrine;
     }
 
