@@ -14,13 +14,13 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 
-public interface ShrineParticles {
+public interface ParticleUtils {
     double ATTUNING_PARTICLE_RATE = Math.PI/10;
 
-    static void shrineSpin(Location loc, Particle.DustOptions color, int radius, int step) {
+    static void shrineSpin(Location loc, Particle.DustOptions color, int radius, double radian) {
         double y = loc.getY() + 0.5;
-        double dx = Math.cos(step * 0.1) * radius;
-        double dz = Math.sin(step * 0.1) * radius;
+        double dx = Math.cos(radian) * radius;
+        double dz = Math.sin(radian) * radius;
         double x1 = loc.getX() + dx;
         double x2 = loc.getX() - dx;
         double z1 = loc.getZ() + dz;

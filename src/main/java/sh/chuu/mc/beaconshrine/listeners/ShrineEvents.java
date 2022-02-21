@@ -55,6 +55,8 @@ public class ShrineEvents implements Listener {
                 || ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK)
             return;
 
+        // TODO Add Shard detection
+
         // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {

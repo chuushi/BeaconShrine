@@ -1,7 +1,6 @@
 package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
-import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,29 +16,22 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
-import org.bukkit.scheduler.BukkitRunnable;
-import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
-import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
-
-import static sh.chuu.mc.beaconshrine.Vars.*;
+import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 public class ShrineCore extends AbstractShrine {
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
     public static final int RADIUS = 4;
 
-    private final int id;
     private int beaconY;
-    private Material symbolItemType;
     private long firstTradeTime;
     private int scrollUses;
     private int scrollMax;
     private int scrollTotalPurchases;
     private Player trader = null;
     private Merchant merchant = null;
-    private BukkitRunnable particles;
 
     /**
      * When creating this, assert that ShulkerBox shulker.getCustomName() is not null.
@@ -48,8 +40,7 @@ public class ShrineCore extends AbstractShrine {
      * @param beacon The beacon block
      */
     public ShrineCore(int id, ShulkerBox shulker, Beacon beacon) {
-        super(shulker);
-        this.id = id;
+        super(id, shulker);
         this.beaconY = beacon == null ? -1 : beacon.getY();
         this.firstTradeTime = 0;
         this.scrollMax = 3;
@@ -60,8 +51,7 @@ public class ShrineCore extends AbstractShrine {
     }
 
     public ShrineCore(int id, ConfigurationSection cs) {
-        super(cs);
-        this.id = id;
+        super(id, cs);
         this.firstTradeTime = cs.getLong("scTime", 0);
         this.scrollMax = cs.getInt("scMax", 3);
         this.scrollUses = cs.getInt("scUses", 0);
@@ -73,60 +63,14 @@ public class ShrineCore extends AbstractShrine {
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
     }
 
-    public void startParticles() {
-        if (particles != null)
-            particles.cancel();
-
-        particles = new BukkitRunnable() {
-            private int step = 0;
-            private final double px = x + 0.5d;
-            private final double py = y;
-            private final double pz = z + 0.5d;
-            @Override
-            public void run() {
-                ShrineParticles.shrineSpin(new Location(w, px, py, pz), dustColor(), 5, step++);
-                if (step == Integer.MAX_VALUE)
-                    step = 0;
-            }
-        };
-
-        particles.runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
-    }
-
-    public void endParticles() {
-        if (particles != null) {
-            particles.cancel();
-            particles = null;
-        }
-    }
-
-    public boolean hasParticles() {
-        return particles != null;
-    }
-
     public ItemStack createShireActivatorItem() {
         return ShrineItemStack.createShrineActivatorItem(name, chatColor, id, x, z);
     }
 
+    @Override
     public void setShulker(ShulkerBox s, boolean dyed) {
-        this.w = s.getWorld();
-        this.x = s.getX();
-        this.z = s.getZ();
-        this.y = s.getY();
-        this.name = s.getCustomName();
-        this.color = dyed ? s.getColor() : null;
-        this.chatColor = color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
+        super.setShulker(s, dyed);
         this.beaconY = -1;
-    }
-
-    public void setSymbolItemType(Inventory inv) {
-        for (ItemStack item : inv) {
-            if (item == null || item.getType() == INGOT_ITEM_TYPE && ShrineGUI.getShrineId(item) != -1)
-                continue;
-            this.symbolItemType = item.getType();
-            return;
-        }
-        this.symbolItemType = null;
     }
 
     /**
@@ -168,10 +112,6 @@ public class ShrineCore extends AbstractShrine {
         return false;
     }
 
-    public int id() {
-        return id;
-    }
-
     public Player trader() {
         return trader;
     }
@@ -187,10 +127,16 @@ public class ShrineCore extends AbstractShrine {
         gui.setItem(4, ShrineGUI.WARP_LIST_ITEM);
         // FIXME Shop Item amount desync (shows 0) after fully restocked
         gui.setItem(7, ShrineGUI.createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
+        // TODO add other shard list
 
         // Add Ender Chest if it exists in Shulker inventory
         if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(1, ShrineGUI.ENDER_CHEST_ITEM);
         return gui;
+    }
+
+    @Override
+    protected void theParticles(int step) {
+        ParticleUtils.shrineSpin(new Location(w, midX, midY, midZ), dustColor(), 5, step * 0.1);
     }
 
     public void openMerchant(Player p) {

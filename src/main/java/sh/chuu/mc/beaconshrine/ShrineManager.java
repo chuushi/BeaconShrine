@@ -22,7 +22,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
-import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
+import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,8 +97,8 @@ public class ShrineManager {
         if (s == null || !s.isValid()) return false;
 
         Location loc = p.getLocation();
-        Vector vector = ShrineParticles.getDiff(s.x(), s.y(), s.z(), loc);
-        ShrineParticles.beam(loc, vector, s.dustColor());
+        Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);
+        ParticleUtils.beam(loc, vector, s.dustColor());
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, GuiType.HOME));
         return true;
@@ -108,14 +108,14 @@ public class ShrineManager {
         if (attuning.contains(p)) return;
         attuning.add(p);
 
-        ShrineParticles.shrineIgnitionSound(p);
+        ParticleUtils.shrineIgnitionSound(p);
         new BukkitRunnable() {
             final Location initLoc = p.getLocation();
             final double x = initLoc.getX();
             final double y = initLoc.getY();
             final double z = initLoc.getZ();
             final ShrineCore shrine = getShrine(id);
-            final Vector vector = ShrineParticles.getDiff(shrine.x(), shrine.y(), shrine.z(), p.getLocation());
+            final Vector vector = ParticleUtils.getDiff(shrine.x(), shrine.y(), shrine.z(), p.getLocation());
             final Particle.DustOptions dustColor = shrine.dustColor();
             private int step = 100;
 
@@ -131,7 +131,7 @@ public class ShrineManager {
                     attuning.remove(p);
                     this.cancel();
                     plugin.getCloudManager().attuneShrine(p, id);
-                    ShrineParticles.attuneBoom(initLoc, shrine.color());
+                    ParticleUtils.attuneBoom(initLoc, shrine.color());
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuned with " + shrine.name()).create());
                     shrine.startParticles();
@@ -140,7 +140,7 @@ public class ShrineManager {
                     p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                             new ComponentBuilder("Attuning with " + shrine.name() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
                 }
-                ShrineParticles.attuning(initLoc, vector, dustColor, step--);
+                ParticleUtils.attuning(initLoc, vector, dustColor, step--);
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
