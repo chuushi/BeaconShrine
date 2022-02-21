@@ -30,7 +30,7 @@ import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.ShrineManager;
-import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
+import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.List;
@@ -68,7 +68,7 @@ public class ShrineEvents implements Listener {
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
-                        ShrineMultiblock shrine;
+                        ShrineCore shrine;
                         int id = ShrineGUI.getShrineId(item);
                         if ((shrine = manager.updateShrine(id, shulker)) == null) {
                             shrine = manager.newShrine(shulker, null);
@@ -213,7 +213,7 @@ public class ShrineEvents implements Listener {
 
     private ShulkerBox getValidShulkerNear(Block center, int tier) {
         ShulkerBox ret = null;
-        for (Block b : BlockUtils.getSurrounding(center, ShrineMultiblock.RADIUS)) {
+        for (Block b : BlockUtils.getSurrounding(center, ShrineCore.RADIUS)) {
             BlockState state = b.getState();
             if (state instanceof ShulkerBox sb
                     && sb.getCustomName() != null

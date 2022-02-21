@@ -11,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import sh.chuu.mc.beaconshrine.listeners.LoreItemUseEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.listeners.ShrineEvents;
-import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
+import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 
 import java.io.IOException;
@@ -37,6 +37,9 @@ public class BeaconShrine extends JavaPlugin {
         return shrineManager;
     }
 
+    // TODO Add a worldborder check
+    // TODO For GUI, remove hand item before closing the GUI or item may dupe on plugin disable
+
     @Override
     public void onEnable() {
         BeaconShrine.instance = this;
@@ -57,7 +60,7 @@ public class BeaconShrine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new LoreItemUseEvents(), this);
 
         shrineManager.getShrines().values().forEach(s -> {
-            if (!s.hasParticles() && s.getWorld().isChunkLoaded(s.x() >> 4, s.z() >> 4) && s.isValid()) {
+            if (!s.hasParticles() && s.world().isChunkLoaded(s.x() >> 4, s.z() >> 4) && s.isValid()) {
                 s.startParticles();
             }
         });
@@ -148,7 +151,7 @@ public class BeaconShrine extends JavaPlugin {
                     return true;
                 }
 
-                ShrineMultiblock s = shrineManager.getShrine(id);
+                ShrineCore s = shrineManager.getShrine(id);
                 if (s == null) {
                     sender.sendMessage("This Shrine does not exist");
                 } else {

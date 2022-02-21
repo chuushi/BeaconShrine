@@ -21,7 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
-import sh.chuu.mc.beaconshrine.shrine.ShrineMultiblock;
+import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.utils.ShrineParticles;
 
 import java.io.File;
@@ -35,13 +35,13 @@ public class ShrineManager {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final File configFile;
     private final YamlConfiguration config;
-    private final Map<Integer, ShrineMultiblock> shrines = new HashMap<>();
+    private final Map<Integer, ShrineCore> shrines = new HashMap<>();
     private final Map<Player, GuiView> whichGui = new LinkedHashMap<>();
     private final Set<Player> attuning = new LinkedHashSet<>();
     private final Set<Player> warping = new LinkedHashSet<>();
     private int nextId = 0;
 
-    public record GuiView(ShrineMultiblock shrine,
+    public record GuiView(ShrineCore shrine,
                           GuiType type) {
     }
 
@@ -72,15 +72,15 @@ public class ShrineManager {
         return nextId;
     }
 
-    public ShrineMultiblock newShrine(ShulkerBox s, Beacon b) {
-        ShrineMultiblock ret = new ShrineMultiblock(nextId, s, b);
+    public ShrineCore newShrine(ShulkerBox s, Beacon b) {
+        ShrineCore ret = new ShrineCore(nextId, s, b);
         shrines.put(nextId, ret);
         nextId++;
         return ret;
     }
 
     public boolean removeShrine(int id) {
-        ShrineMultiblock s = shrines.remove(id);
+        ShrineCore s = shrines.remove(id);
         if (s == null || s.isValid()) return false;
         if (nextId == id + 1) nextId--;
         config.set("s" + id, null);
@@ -93,12 +93,12 @@ public class ShrineManager {
             return true;
         }
 
-        ShrineMultiblock s = shrines.get(id);
+        ShrineCore s = shrines.get(id);
         if (s == null || !s.isValid()) return false;
 
         Location loc = p.getLocation();
-        Vector vector = ShrineParticles.getDiff(s.x(), s.shulkerY(), s.z(), loc);
-        ShrineParticles.beam(loc, vector, s.getDustOptions());
+        Vector vector = ShrineParticles.getDiff(s.x(), s.y(), s.z(), loc);
+        ShrineParticles.beam(loc, vector, s.dustColor());
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, GuiType.HOME));
         return true;
@@ -114,9 +114,9 @@ public class ShrineManager {
             final double x = initLoc.getX();
             final double y = initLoc.getY();
             final double z = initLoc.getZ();
-            final ShrineMultiblock shrine = getShrine(id);
-            final Vector vector = ShrineParticles.getDiff(shrine.x(), shrine.shulkerY(), shrine.z(), p.getLocation());
-            final Particle.DustOptions dustColor = shrine.getDustOptions();
+            final ShrineCore shrine = getShrine(id);
+            final Vector vector = ShrineParticles.getDiff(shrine.x(), shrine.y(), shrine.z(), p.getLocation());
+            final Particle.DustOptions dustColor = shrine.dustColor();
             private int step = 100;
 
             @Override
@@ -171,7 +171,7 @@ public class ShrineManager {
         for (int i = 0; i < last; i++) {
             int id = wids.get(i);
 
-            ShrineMultiblock sm = shrines.get(id);
+            ShrineCore sm = shrines.get(id);
             ItemStack item = sm.createWarpScrollGuiItem(id == currentId);
             ret.setItem(i, item);
         }
@@ -204,7 +204,7 @@ public class ShrineManager {
         }
 
         if (type == WARP_LIST_ITEM_TYPE) {
-            ShrineMultiblock shrine = shrines.get(id);
+            ShrineCore shrine = shrines.get(id);
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -222,7 +222,7 @@ public class ShrineManager {
         }
 
         if (type == SHOP_ITEM_TYPE) {
-            ShrineMultiblock shrine = shrines.get(id);
+            ShrineCore shrine = shrines.get(id);
             if (shrine.trader() != null) {
                 return;
             }
@@ -248,20 +248,20 @@ public class ShrineManager {
         }
     }
 
-    public void clickedWarpGui(Player p, int id, ShrineMultiblock guiShrine) {
+    public void clickedWarpGui(Player p, int id, ShrineCore guiShrine) {
         ShrineGUI.clickNoise(p);
         p.closeInventory();
         long diff = plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
         if (diff > 0)
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGUI.warpTimeLeft(diff)));
         else
-            getShrine(id).warpPlayer(p, guiShrine);
+            getShrine(id).warp(p, guiShrine);
     }
 
-    public ShrineMultiblock updateShrine(int id, ShulkerBox s) {
+    public ShrineCore updateShrine(int id, ShulkerBox s) {
         if (id == -1 || s.getCustomName() == null)
             return null;
-        ShrineMultiblock shrine = shrines.get(id);
+        ShrineCore shrine = shrines.get(id);
         if (shrine == null) return null;
         shrine.setShulker(s, s.getType() != Material.SHULKER_BOX);
         return shrine;
@@ -280,12 +280,12 @@ public class ShrineManager {
             ConfigurationSection cs = config.getConfigurationSection(key);
             nextId = Math.max(id + 1, nextId);
             //noinspection ConstantConditions Never null since it's from an existing key
-            shrines.put(id, new ShrineMultiblock(id, cs));
+            shrines.put(id, new ShrineCore(id, cs));
         }
     }
 
     private void saveData() {
-        for (Map.Entry<Integer, ShrineMultiblock> is : shrines.entrySet()) {
+        for (Map.Entry<Integer, ShrineCore> is : shrines.entrySet()) {
             String section = "s" + is.getKey();
             ConfigurationSection cs = config.getConfigurationSection(section);
             if (cs == null) cs = config.createSection(section);
@@ -298,11 +298,11 @@ public class ShrineManager {
         }
     }
 
-    public ShrineMultiblock getShrine(int id) {
+    public ShrineCore getShrine(int id) {
         return shrines.get(id);
     }
 
-    public Map<Integer, ShrineMultiblock> getShrines() {
+    public Map<Integer, ShrineCore> getShrines() {
         return shrines;
     }
 }

@@ -16,7 +16,7 @@ public class ShrineParticleEvents implements Listener {
         int x = ev.getChunk().getX();
         int z = ev.getChunk().getZ();
         manager.getShrines().values().forEach(s -> {
-            if (ev.getWorld() == s.getWorld() && x == s.x() >> 4 && z == s.z() >> 4 && s.isValid()) {
+            if (ev.getWorld() == s.world() && x == s.x() >> 4 && z == s.z() >> 4 && s.isValid()) {
                 s.startParticles();
             }
         });
@@ -27,7 +27,7 @@ public class ShrineParticleEvents implements Listener {
         int x = ev.getChunk().getX();
         int z = ev.getChunk().getZ();
         manager.getShrines().values().forEach(s -> {
-            if (ev.getWorld() == s.getWorld() && x == s.x() >> 4 && z == s.z() >> 4) {
+            if (ev.getWorld() == s.world() && x == s.x() >> 4 && z == s.z() >> 4) {
                 s.endParticles();
             }
         });

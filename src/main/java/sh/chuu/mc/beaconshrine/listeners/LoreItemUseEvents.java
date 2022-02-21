@@ -54,7 +54,7 @@ public class LoreItemUseEvents implements Listener {
             p.swingMainHand();
 
         ev.setCancelled(true);
-        plugin.getShrineManager().getShrine(ws.id()).warpPlayer(p, null).thenAccept(warped -> {
+        plugin.getShrineManager().getShrine(ws.id()).warp(p, null).thenAccept(warped -> {
             if (warped) item.setAmount(item.getAmount() - 1);
         });
     }
