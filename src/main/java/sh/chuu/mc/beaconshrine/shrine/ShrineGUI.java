@@ -120,7 +120,7 @@ public class ShrineGUI {
     }
 
     public static int getShrineId(Inventory inventory) {
-        HashMap<Integer, ? extends ItemStack> ingots = inventory.all(INGOT_ITEM_TYPE);
+        HashMap<Integer, ? extends ItemStack> ingots = inventory.all(SHRINE_CORE_ITEM_TYPE);
         for (Map.Entry<Integer, ? extends ItemStack> e : ingots.entrySet()) {
             int itemId = getShrineId(e.getValue());
             if (itemId != -1) return itemId;

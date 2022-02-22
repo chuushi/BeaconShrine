@@ -6,32 +6,40 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
+import static sh.chuu.mc.beaconshrine.Vars.*;
+
 public class ShrineShard extends AbstractShrine {
-    private final int parentId;
+    private final ShrineCore parent;
 
-    ShrineShard(int id, int parentId, ShulkerBox shulker) {
+    ShrineShard(int id, ShrineCore parent, ShulkerBox shulker) {
         super(id, shulker);
-        this.parentId = parentId;
+        this.parent = parent;
     }
 
-    ShrineShard(int id, int parentId, ConfigurationSection cs) {
-        super(id, cs);
-        this.parentId = parentId;
-    }
-
+    /**
+     * Is valid if
+     * the shulker box contains a Netherite ingot,
+     * A block adjacent is a Netherite block
+     * the parent shrine is not far away
+     *
+     * @return true if this shrine is valid
+     */
     @Override
     public boolean isValid() {
         Block shulker = w.getBlockAt(x, y, z);
         Block netherite = shulker.getRelative(BlockFace.DOWN);
         return shulker.getState() instanceof ShulkerBox s
                 && s.getCustomName() != null
-                && netherite.getType() == Material.NETHERITE_BLOCK;
+                && netherite.getType() == Material.NETHERITE_BLOCK
+                && parent.isValid()
+                && parent.containsShard(this);
     }
 
     @Override
@@ -54,16 +62,18 @@ public class ShrineShard extends AbstractShrine {
         ParticleUtils.shrineSpin(new Location(w, midX, midY, midZ), dustColor(), 2, step * 0.5);
     }
 
-    public int parentId() {
-        return parentId;
+    @Override
+    protected boolean warpSequence(int step, WarpSequence ws, Player p) {
+        return step == 0;
     }
 
-    public void save(ConfigurationSection cs) {
-        cs.set("parentId", parentId);
-        cs.set("name", name);
-        cs.set("color", color == null ? null : color.toString());
-        cs.set("world", w.getName());
-        cs.set("loc", new int[]{x, y, z});
-        cs.set("symIT", symbolItemType == null ? null : symbolItemType.name());
+    @Override
+    public ItemStack makeShrineActivatorItem() {
+        return ShrineItemStack.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, name, chatColor, id, x, z);
     }
+
+    public AbstractShrine parent() {
+        return parent;
+    }
+
 }

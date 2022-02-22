@@ -8,8 +8,6 @@ import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -19,8 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
@@ -35,7 +31,7 @@ import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public abstract class AbstractShrine {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
-    private final CloudManager cloudManager = plugin.getCloudManager();
+    protected final CloudManager cloudManager = plugin.getCloudManager();
     private final ShrineManager manager = plugin.getShrineManager();
 
     protected final int id;
@@ -91,6 +87,8 @@ public abstract class AbstractShrine {
 
     public abstract boolean isValid();
     public abstract Inventory getGui(Player p);
+    public abstract ItemStack makeShrineActivatorItem();
+
     public int id() { return id; }
     public World world() { return w; }
     public int x() { return x; }
@@ -121,7 +119,20 @@ public abstract class AbstractShrine {
         return particles != null;
     }
 
+    /**
+     * Particles to show during idle
+     * @param step
+     */
     protected abstract void theParticles(int step);
+
+    /**
+     * Warp Teleportation Sequence
+     * Warps teleport executes at 0 By this point, item has been consumed.
+     * @param p Player that is teleporting
+     * @return true if completed
+     */
+    protected abstract boolean warpSequence(int step, WarpSequence ws, Player p);
+
 
     public Inventory getInventory() {
         BlockState state = w.getBlockAt(x, y, z).getState();
@@ -140,7 +151,7 @@ public abstract class AbstractShrine {
 
     public void setSymbolItemType(Inventory inv) {
         for (ItemStack item : inv) {
-            if (item == null || item.getType() == INGOT_ITEM_TYPE && ShrineGUI.getShrineId(item) != -1)
+            if (item == null || item.getType() == SHRINE_CORE_ITEM_TYPE && ShrineGUI.getShrineId(item) != -1)
                 continue;
             this.symbolItemType = item.getType();
             return;
@@ -216,17 +227,17 @@ public abstract class AbstractShrine {
     }
 
     protected class WarpSequence extends BukkitRunnable {
-        private int i = 100;
+        protected int i = 100;
         private final Player p;
-        private final double initX;
-        private final double initY;
-        private final double initZ;
-        private final Color c = color();
+        protected final double initX;
+        protected final double initY;
+        protected final double initZ;
+        protected final Color color = color();
         private final CompletableFuture<Boolean> result;
 
-        private final double newX = x + 0.5d;
-        private final double newY;
-        private final double newZ = z + 0.5d;
+        protected final double newX = x + 0.5d;
+        protected final double newY;
+        protected final double newZ = z + 0.5d;
 
         private WarpSequence(Player player, double newY, CompletableFuture<Boolean> result) {
             super();
@@ -244,35 +255,9 @@ public abstract class AbstractShrine {
             Location loc = p.getLocation();
             final Particle.DustOptions dustOpt = dustColor();
 
-            if (i > 30) {
-                if (loc.getX() != initX || loc.getY() != initY || loc.getZ() != initZ) {
-                    result.complete(false);
-                    this.cancel();
-                }
-            } else if (i == 30) {
-                p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
-            } else if (i == 10) {
-                p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
-                //noinspection ConstantConditions
-                loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
-            } else if (i == 2) {
-                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1, false, false, false));
-            } else if (i == 0) {
-                Location to = p.getLocation();
-                to.setX(newX);
-                to.setY(newY);
-                to.setZ(newZ);
-
-                ParticleUtils.warpBoom(loc, c);
-                cloudManager.setNextWarp(p, System.currentTimeMillis() + GLOBAL_WARP_COOLDOWN);
-                p.teleport(to);
-                p.removePotionEffect(PotionEffectType.LEVITATION);
-                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, w.getEnvironment() == World.Environment.NETHER ? 100 : 200, 0, false, false, false));
-                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
-                result.complete(true);
-            } else if (i == -1) {
-                ParticleUtils.warpBoom(loc, c);
-            } else if (i == -100) {
+            if (i == 0) result.complete(true);
+            if (warpSequence(i, this, p)) {
+                if (i > 0) result.complete(false);
                 this.cancel();
             }
 

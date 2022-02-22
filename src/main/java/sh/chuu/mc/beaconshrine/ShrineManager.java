@@ -20,8 +20,10 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import sh.chuu.mc.beaconshrine.shrine.AbstractShrine;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
+import sh.chuu.mc.beaconshrine.shrine.ShrineShard;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.io.File;
@@ -41,28 +43,26 @@ public class ShrineManager {
     private final Set<Player> warping = new LinkedHashSet<>();
     private int nextId = 0;
 
-    public record GuiView(ShrineCore shrine,
-                          GuiType type) {
-    }
+    public record GuiView(AbstractShrine shrine, GuiType type) {}
 
     public enum GuiType {
-        HOME, SHOP, WARP_LIST;
+        HOME, SHOP, WARP_LIST
         // TODO add GUI types + Link it with shrine ID stuffs
     }
 
     public ShrineManager() throws IOException {
         this.configFile = new File(plugin.getDataFolder(), "shrines.yml");
         if (!configFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored This creates a new file. Result can be ignored.
             configFile.createNewFile();
         }
         this.config = YamlConfiguration.loadConfiguration(configFile);
-        loadShrines();
     }
 
     public void onDisable() {
         for (Map.Entry<Player, GuiView> e : whichGui.entrySet()) {
             Player p = e.getKey();
-            closeShrineGui(p);
+            closedShrineGui(p);
             p.closeInventory();
         }
         saveData();
@@ -87,18 +87,44 @@ public class ShrineManager {
         return true;
     }
 
-    public boolean openShrineGui(Player p, int id) {
+    /**
+     * Opens GUI for the corresponding shard
+     * @param p Player
+     * @param id ID
+     * @param shardLocation Location if shard, null otherwise
+     * @return
+     */
+    public boolean openShrineGui(Player p, int id, Location shardLocation) {
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
-            doAttuneAnimation(p, id);
+            p.sendMessage("Pass: 0.1");
+            if (shardLocation == null)
+                doAttuneAnimation(p, id);
+            else ; // TODO something about strong energy emitting from this
             return true;
         }
+        p.sendMessage("Pass: 1");
 
-        ShrineCore s = shrines.get(id);
+        ShrineCore core = shrines.get(id);
+        AbstractShrine s = null;
+        if (shardLocation != null) {
+            p.sendMessage("Pass: 1.1");
+            for (ShrineShard ss : core.getShards()) {
+                if (ss.getShulkerLocation() == shardLocation) {
+                    s = ss;
+                    break;
+                }
+            }
+        } else {
+            p.sendMessage("Pass: 1.2");
+            s = core;
+        }
         if (s == null || !s.isValid()) return false;
+
+        p.sendMessage("Pass: 2");
 
         Location loc = p.getLocation();
         Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);
-        ParticleUtils.beam(loc, vector, s.dustColor());
+        ParticleUtils.beam(loc, vector, s.dustColor()); // TODO Move particle logic to ShrineCore/ShrineShard
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, GuiType.HOME));
         return true;
@@ -178,13 +204,13 @@ public class ShrineManager {
         return ret;
     }
 
-    public GuiView closeShrineGui(HumanEntity p) {
+    public GuiView closedShrineGui(HumanEntity p) {
         @SuppressWarnings("SuspiciousMethodCalls")
         GuiView gui = whichGui.remove(p);
         if (gui == null)
             return null;
-        if (gui.type == GuiType.SHOP) {
-            gui.shrine.closeMerchant((Player) p);
+        if (gui.shrine instanceof ShrineCore sc && gui.type == GuiType.SHOP) {
+            sc.closeMerchant((Player) p);
         }
         return gui;
     }
@@ -248,10 +274,12 @@ public class ShrineManager {
         }
     }
 
-    public void clickedWarpGui(Player p, int id, ShrineCore guiShrine) {
+    public void clickedWarpGui(Player p, int id, AbstractShrine guiShrine) {
         ShrineGUI.clickNoise(p);
         p.closeInventory();
-        long diff = plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
+        long diff = guiShrine instanceof ShrineCore
+                ? plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis()
+                : 0;
         if (diff > 0)
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGUI.warpTimeLeft(diff)));
         else
@@ -267,7 +295,8 @@ public class ShrineManager {
         return shrine;
     }
 
-    private void loadShrines() {
+    public void loadShrines() {
+        if (!shrines.isEmpty()) return; // TODO Clean up logic
         for (String key : config.getKeys(false)) {
             if (!key.startsWith("s"))
                 continue;

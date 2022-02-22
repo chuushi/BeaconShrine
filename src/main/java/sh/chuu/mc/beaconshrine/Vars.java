@@ -6,7 +6,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
 
 public interface Vars {
-    Material INGOT_ITEM_TYPE = Material.NETHERITE_INGOT;
+    Material SHRINE_CORE_ITEM_TYPE = Material.NETHERITE_INGOT;
+    Material SHRINE_SHARD_ITEM_TYPE = Material.AMETHYST_SHARD;
     String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
     String SHIRE_YOU_ARE_HERE = ChatColor.GRAY + "You are here";
     Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
@@ -20,4 +21,5 @@ public interface Vars {
     BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
     BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     BaseComponent INVALID_WARPING = new TextComponent("Move to cancel the current warp first");
+    BaseComponent shrineInitFailText = new TextComponent("Shrine is not set up properly; run /shrinehelp");
 }

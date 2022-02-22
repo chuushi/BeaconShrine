@@ -25,8 +25,8 @@ public interface ShrineItemStack {
         return null;
     }
 
-    public static ItemStack createShrineActivatorItem(String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
-        ItemStack ret = new ItemStack(INGOT_ITEM_TYPE);
+    static ItemStack shrineActivatorItem(Material item, String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
+        ItemStack ret = new ItemStack(item);
 
         ItemMeta im = ret.getItemMeta();
         if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");

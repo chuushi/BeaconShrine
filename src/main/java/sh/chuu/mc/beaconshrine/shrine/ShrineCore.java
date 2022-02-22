@@ -4,6 +4,9 @@ import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -16,14 +19,23 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static sh.chuu.mc.beaconshrine.Vars.*;
+
 public class ShrineCore extends AbstractShrine {
     public static final Material BLOCK = Material.NETHERITE_BLOCK;
     public static final int RADIUS = 4;
+
+    private final ArrayList<ShrineShard> shards = new ArrayList<>();
 
     private int beaconY;
     private long firstTradeTime;
@@ -63,8 +75,9 @@ public class ShrineCore extends AbstractShrine {
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
     }
 
-    public ItemStack createShireActivatorItem() {
-        return ShrineItemStack.createShrineActivatorItem(name, chatColor, id, x, z);
+    @Override
+    public ItemStack makeShrineActivatorItem() {
+        return ShrineItemStack.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, name, chatColor, id, x, z);
     }
 
     @Override
@@ -75,10 +88,11 @@ public class ShrineCore extends AbstractShrine {
 
     /**
      * Is valid if
-     * the shulker box contains a Netherite ingot,
+     * the shulker box contains a custom Netherite ingot,
      * the beacon below is full tier (Tier 4), and
-     * the first row of beacon contains at least 4 Netherite blocks.
-     *
+     * the top blocks of beacon tower contains at least 4 Netherite blocks.
+     * FIXME Blocked beacon beam is still valid!
+     * TODO Require at least 2 blocks of free space within 7 blocks of shrine shulker directly under
      * @return true if this shrine is valid
      */
     @Override
@@ -187,10 +201,52 @@ public class ShrineCore extends AbstractShrine {
         cs.set("scPurch", scrollTotalPurchases);
     }
 
+    protected boolean containsShard(ShrineShard shard) {
+        return shards.contains(shard);
+    }
+
     /**
      * This assumes that a Shulker box exists as an inventory
      */
     public void putShrineItem() {
-        getInventory().addItem(createShireActivatorItem());
+        getInventory().addItem(makeShrineActivatorItem());
+    }
+
+    @Override
+    protected boolean warpSequence(int step, WarpSequence ws, Player p) {
+        Location loc = p.getLocation();
+
+        if (step > 30) {
+            return loc.getX() != ws.initX || loc.getY() != ws.initY || loc.getZ() != ws.initZ;
+        } else if (step == 30) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
+        } else if (step == 10) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 63, false, false, false));
+            //noinspection ConstantConditions
+            loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, SoundCategory.PLAYERS, 1f, 0.5f);
+        } else if (step == 2) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1, false, false, false));
+        } else if (step == 0) {
+            Location to = p.getLocation();
+            to.setX(ws.newX);
+            to.setY(ws.newY);
+            to.setZ(ws.newZ);
+
+            ParticleUtils.warpBoom(loc, ws.color);
+            cloudManager.setNextWarp(p, System.currentTimeMillis() + GLOBAL_WARP_COOLDOWN);
+            p.teleport(to);
+            p.removePotionEffect(PotionEffectType.LEVITATION);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, w.getEnvironment() == World.Environment.NETHER ? 100 : 200, 0, false, false, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
+        } else if (step == -1) {
+            ParticleUtils.warpBoom(loc, ws.color);
+        } else if (step == -100) {
+            return true;
+        }
+        return false;
+    }
+
+    public List<ShrineShard> getShards() {
+        return shards;
     }
 }

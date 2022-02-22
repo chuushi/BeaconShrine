@@ -1,15 +1,14 @@
 package sh.chuu.mc.beaconshrine.listeners;
 
 import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -18,14 +17,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
@@ -33,14 +27,11 @@ import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
-import java.util.List;
-
-import static sh.chuu.mc.beaconshrine.Vars.INGOT_ITEM_TYPE;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final ShrineManager manager = plugin.getShrineManager();
-    private final BaseComponent shrineInitFailText = new TextComponent("Shrine is not set up properly; run /shrinehelp");
 
     @EventHandler
     public void shrineFirework(EntityDamageByEntityEvent ev) {
@@ -51,21 +42,25 @@ public class ShrineEvents implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
     public void shrineClick(PlayerInteractEvent ev) { // FIXME Excessive Event Calls
-        if (ev.getPlayer().isSneaking() || ev.useInteractedBlock() == Event.Result.DENY
-                || ev.getHand() != EquipmentSlot.HAND || ev.getAction() != Action.RIGHT_CLICK_BLOCK)
-            return;
-
-        // TODO Add Shard detection
+        if (ev.getPlayer().isSneaking()
+                || ev.useInteractedBlock() == Event.Result.DENY
+                || ev.getHand() != EquipmentSlot.HAND
+                || ev.getAction() != Action.RIGHT_CLICK_BLOCK
+                || ev.getClickedBlock() == null
+                || BlockUtils.hasInteraction(ev.getClickedBlock().getType())
+        ) return;
 
         // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {
             if (ev.useItemInHand() == Event.Result.DENY) return;
-            if (item.getType() == INGOT_ITEM_TYPE) {
-                ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 4);
+            if (item.getType() == SHRINE_CORE_ITEM_TYPE) { // TODO  || item.getType() == SHRINE_SHARD_ITEM_TYPE
+                ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 4, false);
+                ShulkerBox shulker = cs.shulker; // FIXME Review what changes!!!
                 if (shulker != null) {
                     Inventory inv = shulker.getInventory();
-                    if (ShrineGUI.getShrineId(inv) == -1) {
+                    int shrineId = ShrineGUI.getShrineId(inv);
+                    if (shrineId == -1) {
                         // new shulker box
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
@@ -79,25 +74,32 @@ public class ShrineEvents implements Listener {
                         item.setAmount(item.getAmount() - 1);
                         shrine.putShrineItem();
                         return;
+                    } else {
+                        openGUI(ev.getPlayer(), shrineId, cs);
+                        ev.setCancelled(true);
                     }
                 }
             }
         }
 
-        Block b = ev.getClickedBlock();
-        if (b != null && BlockUtils.hasInteraction(b.getType())) return;
+        ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 1, false); // o(n)
 
-        ShulkerBox shulker = getValidShulkerNear(ev.getClickedBlock(), 1);
-        if (shulker == null) return;
+        if (cs == null) return;
 
-        int id = ShrineGUI.getShrineId(shulker.getInventory());
+        Location loc = cs.shulker.getLocation();
+        ev.getPlayer().sendMessage("Shulker box: %d %d %d".formatted(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+
+        int id = ShrineGUI.getShrineId(cs.shulker.getInventory());
         if (id != -1) {
-            Player p = ev.getPlayer();
-            if (!manager.openShrineGui(p, id))
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
+            openGUI(ev.getPlayer(), id, cs);
             ev.setCancelled(true);
         }
+    }
 
+    private void openGUI(Player p, int id, ClickedShulker sh) {
+        // FIXME Implement differentiation between Shrine Core and Shrine Shard
+        if (!manager.openShrineGui(p, id, sh.isCore ? null : sh.shulker.getLocation()))
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -110,112 +112,43 @@ public class ShrineEvents implements Listener {
         }
     }
 
-    @EventHandler
-    public void guiClick(InventoryClickEvent ev) {
-        Player p = (Player) ev.getWhoClicked();
-        Inventory inv = ev.getClickedInventory();
-        ShrineManager.GuiView gui = manager.getGuiView(p);
-        if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
-            return;
+    private ClickedShulker getValidShulkerNear(Block center, int tier, boolean onlyShard) {
+        ClickedShulker ret = null;
 
-        if (ev.getClick().isShiftClick()) {
-            ev.setCancelled(true);
-            return;
-        }
+        // Radius of straight directions
+        int r = ShrineCore.RADIUS + 1; // TODO Move this to vars or somewhere else
+        boolean centerIsLodestone = center.getType() == Material.LODESTONE;
 
-        ItemStack item = ev.getCurrentItem();
-        boolean isTopInv = inv == ev.getView().getTopInventory();
+        for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
+            Block ptr = center;
+            boolean isLodestoneBefore = centerIsLodestone;
 
-        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
-            if (ev.isRightClick() && isTopInv) {
-                ev.setCancelled(true);
-                int clickId = ShrineGUI.getWarpIdGui(item);
-                if (clickId != -1) {
-                    manager.clickedWarpGui(p, clickId, gui.shrine());
+            for (int i = 0; i < r; i++) {
+                ptr = ptr.getRelative(face);
+                if (ptr.getType() == Material.LODESTONE) {
+                    isLodestoneBefore = true;
+                    continue;
                 }
-                return;
-            }
-
-            ItemStack cursor = ev.getView().getCursor();
-            if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
-            if (cursor != null) {
-                boolean isWarpOnCursor = ShrineGUI.isWarpGui(cursor);
-                if (isTopInv ^ isWarpOnCursor) {
-                    ev.setCancelled(true);
+                BlockState state = ptr.getState();
+                if (state instanceof ShulkerBox sb && sb.getCustomName() != null) { // TODO Do we want to move in shrine ID item detection logic here?
+                    // prevent counting in when there's more than two shulker boxes on the beacon beam(s)
+                    if (ret != null) {
+                        return null;
+                    }
+                    if (isLodestoneBefore) {
+                        ret = new ClickedShulker(sb, false);
+                    }
+                    if (BlockUtils.getBeaconBelow(ptr, tier) != null) {
+                        ret = new ClickedShulker(sb, true);
+                    }
                 }
-            }
-            return;
-        }
-
-        if (!isTopInv) return;
-        ev.setCancelled(true);
-        if (item == null) return;
-
-        if (gui.type() == ShrineManager.GuiType.HOME) {
-            manager.clickedGui(gui.shrine().id(), item, p);
-        }
-    }
-
-    @EventHandler
-    public void guiDrag(InventoryDragEvent ev) {
-        HumanEntity he = ev.getWhoClicked();
-        Inventory inv = ev.getView().getTopInventory();
-        ShrineManager.GuiView gui = manager.getGuiView(he);
-        if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
-            return;
-
-        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
-            ev.setCancelled(true);
-            return;
-        }
-
-        int topSize = inv.getSize();
-        for (int slot : ev.getRawSlots()) {
-            if (slot < topSize) {
-                ev.setCancelled(true);
-                break;
+                isLodestoneBefore = false;
             }
         }
-    }
 
-    @EventHandler
-    public void guiClose(InventoryCloseEvent ev) {
-        Player p = (Player) ev.getPlayer();
-        ShrineManager.GuiView gui = manager.closeShrineGui(p);
-        InventoryView view = ev.getView();
-        Inventory inv = view.getTopInventory();
+        if (ret != null || onlyShard) return ret;
 
-        if (gui != null) {
-            if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
-                // account for the item that may have been on the hand
-                ItemStack cursor = view.getCursor();
-                if (cursor != null && ShrineGUI.isWarpGui(cursor)) {
-                    inv.addItem(cursor);
-                    view.setCursor(null);
-                }
-
-                List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
-                List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine().id());
-
-                if (oldList.equals(newList)) return;
-
-                oldList.clear();
-                oldList.addAll(newList);
-            }
-            return;
-        }
-
-        if (inv.getType() == InventoryType.SHULKER_BOX) {
-            int id = ShrineGUI.getShrineId(inv);
-            if (id == -1) return;
-
-            manager.getShrine(id).setSymbolItemType(inv);
-        }
-    }
-
-    private ShulkerBox getValidShulkerNear(Block center, int tier) {
-        ShulkerBox ret = null;
-        for (Block b : BlockUtils.getSurrounding(center, ShrineCore.RADIUS)) {
+        for (Block b : BlockUtils.getSurroundingStage2(center, ShrineCore.RADIUS)) {
             BlockState state = b.getState();
             if (state instanceof ShulkerBox sb
                     && sb.getCustomName() != null
@@ -225,10 +158,12 @@ public class ShrineEvents implements Listener {
                 if (ret != null) {
                     return null;
                 }
-                ret = sb;
+                ret = new ClickedShulker(sb, true);
 
             }
         }
         return ret;
     }
+
+    private record ClickedShulker(ShulkerBox shulker, boolean isCore) {}
 }

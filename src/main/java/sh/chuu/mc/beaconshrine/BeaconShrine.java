@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import sh.chuu.mc.beaconshrine.listeners.GUIEvents;
 import sh.chuu.mc.beaconshrine.listeners.LoreItemUseEvents;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.listeners.ShrineEvents;
@@ -48,6 +49,7 @@ public class BeaconShrine extends JavaPlugin {
 
         try {
             shrineManager = new ShrineManager();
+            shrineManager.loadShrines();
         } catch (IOException e) {
             getLogger().log(Level.SEVERE, "Could not load Shrine storage", e);
             getPluginLoader().disablePlugin(this);
@@ -58,6 +60,7 @@ public class BeaconShrine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(cloudManager, this);
         getServer().getPluginManager().registerEvents(new ShrineEvents(), this);
         getServer().getPluginManager().registerEvents(new LoreItemUseEvents(), this);
+        getServer().getPluginManager().registerEvents(new GUIEvents(), this);
 
         shrineManager.getShrines().values().forEach(s -> {
             if (!s.hasParticles() && s.world().isChunkLoaded(s.x() >> 4, s.z() >> 4) && s.isValid()) {
@@ -155,7 +158,7 @@ public class BeaconShrine extends JavaPlugin {
                 if (s == null) {
                     sender.sendMessage("This Shrine does not exist");
                 } else {
-                    ((Player) sender).getInventory().addItem(s.createShireActivatorItem());
+                    ((Player) sender).getInventory().addItem(s.makeShrineActivatorItem());
                     sender.sendMessage("Item created");
                     return true;
                 }

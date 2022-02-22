@@ -25,7 +25,13 @@ public class BlockUtils {
         };
     }
 
-    public static List<Block> getSurrounding(Block b, int radius) {
+    /**
+     * This will search for all blocks except for the planes that lie on the relative 000 axis.
+     * @param b
+     * @param radius
+     * @return
+     */
+    public static List<Block> getSurroundingStage2(Block b, int radius) {
         final World w = b.getWorld();
         final int x = b.getX();
         final int y = b.getY();
@@ -36,7 +42,9 @@ public class BlockUtils {
         final List<Block> ret = new ArrayList<>();
         for (int i = x - radius; i <= xh; i++) {
             for (int k = z - radius; k <= zh; k++) {
+                if (x == i && z == k) continue;
                 for (int j = y - radius; j <= yh; j++) {
+                    if (y == j && (x == i || z == k)) continue;
                     ret.add(w.getBlockAt(i, j, k));
                 }
             }
