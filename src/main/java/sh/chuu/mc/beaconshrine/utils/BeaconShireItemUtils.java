@@ -12,18 +12,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static sh.chuu.mc.beaconshrine.Vars.SHIRE_ID_HEADER;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public interface BeaconShireItemUtils {
-    Material WARP_SCROLL_MATERIAL = Material.FLOWER_BANNER_PATTERN;
-
-    String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";
-    String WARP_SCROLL_UUID_PREFIX = ChatColor.DARK_GRAY.toString();
-    String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
-
 
     static Inventory copyPlayerInventory(Player p, String name) {
         ItemStack[] im = p.getInventory().getContents();
@@ -51,7 +46,7 @@ public interface BeaconShireItemUtils {
     }
 
     static ItemStack createWarpScroll(int id, String name, ChatColor cc, Player p) {
-        ItemStack ret = new ItemStack(WARP_SCROLL_MATERIAL);
+        ItemStack ret = new ItemStack(WARP_SCROLL_ITEM_TYPE);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
         im.setDisplayName(color + name + " Warp Scroll");
@@ -69,7 +64,7 @@ public interface BeaconShireItemUtils {
     }
 
     static WarpScroll getWarpScrollData(ItemStack item) {
-        if (item == null || item.getType() != WARP_SCROLL_MATERIAL) return null;
+        if (item == null || item.getType() != WARP_SCROLL_ITEM_TYPE) return null;
         ItemMeta im = item.getItemMeta();
         if (im == null) return null;
         List<String> lore = im.getLore();
@@ -81,35 +76,56 @@ public interface BeaconShireItemUtils {
 
     record WarpScroll(int id, UUID owner) {
     }
-    default ItemStack getItemScroll(int id) {
-        ItemStack item = new ItemStack(Material.FLOWER_BANNER_PATTERN);
 
-        return item;
-    }
-
-    default int getId(ItemStack item) {
-        return 0;
-    }
-
-    default ItemStack getGuiScroll(int id) {
-        return null;
-    }
-
-    static ItemStack shrineActivatorItem(Material item, String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
-        ItemStack ret = new ItemStack(item);
+    static ItemStack shrineActivatorItem(Material type, boolean isCore, String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
+        ItemStack ret = new ItemStack(type);
 
         ItemMeta im = ret.getItemMeta();
         if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
-        im.setDisplayName(color + "Shrine Activator");
+        im.setDisplayName(color + (isCore ? SHRINE_CORE_ITEM_NAME : SHRINE_SHARD_ITEM_NAME));
         im.setLore(ImmutableList.of(
                 color + name,
                 SHIRE_ID_HEADER + id,
-                ChatColor.DARK_GRAY + "at " + x + ", " + z
+                ChatColor.DARK_GRAY + (isCore ? "at " : "Core at ") + x + ", " + z
         ));
         im.addEnchant(Enchantment.DURABILITY, 1, true);
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         ret.setItemMeta(im);
         return ret;
-    }}
+    }
+
+    static int shrineActivatorId(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return -1;
+        List<String> lore = meta.getLore();
+        if (lore == null || lore.size() < 3) return -1;
+        try {
+            return Integer.parseInt(lore.get(1).substring(SHIRE_ID_HEADER.length()));
+        } catch (NumberFormatException | IndexOutOfBoundsException ex) {
+            return -1;
+        }
+    }
+
+    static int getShrineId(Inventory inventory, Material type) { // FIXME Go through this because shards
+        for (ItemStack i : inventory) {
+            if (i == null || i.getType() != type) continue;
+            int itemId = shrineActivatorId(i);
+            if (itemId != -1) return itemId;
+        }
+        return -1;
+    }
+
+    record ShrineIdResult(int id, ItemStack item) {}
+    static ShrineIdResult getShrineId(Inventory inventory) { // FIXME Go through this because shards
+        for (ItemStack i : inventory) {
+            if (i == null
+                    || i.getType() != SHRINE_CORE_ITEM_TYPE && i.getType() != SHRINE_SHARD_ITEM_TYPE
+            ) continue;
+            int itemId = shrineActivatorId(i);
+            if (itemId != -1) return new ShrineIdResult(itemId, i);
+        }
+        return null;
+    }
+}

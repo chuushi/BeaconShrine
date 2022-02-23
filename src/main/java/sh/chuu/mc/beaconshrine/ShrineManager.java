@@ -293,6 +293,9 @@ public class ShrineManager {
         ShrineCore shrine = cores.get(id);
         if (shrine == null) return null;
         shrine.setShulker(s, s.getType() != Material.SHULKER_BOX);
+
+
+
         return shrine;
     }
 

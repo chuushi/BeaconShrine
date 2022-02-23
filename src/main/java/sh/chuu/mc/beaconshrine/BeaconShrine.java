@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.shrineActivatorId;
+
 public class BeaconShrine extends JavaPlugin {
     private static BeaconShrine instance = null;
 
@@ -114,7 +116,7 @@ public class BeaconShrine extends JavaPlugin {
                 } else if (sender instanceof Player) {
                     Player p = (Player) sender;
                     ItemStack item = p.getInventory().getItemInMainHand();
-                    id = ShrineGUI.getShrineId(item);
+                    id = shrineActivatorId(item);
                     if (id == -1) {
                         sender.sendMessage("This item doesn't contain shrine id information");
                         return true;
@@ -158,7 +160,7 @@ public class BeaconShrine extends JavaPlugin {
                 if (s == null) {
                     sender.sendMessage("This Shrine does not exist");
                 } else {
-                    ((Player) sender).getInventory().addItem(s.makeShrineActivatorItem());
+                    ((Player) sender).getInventory().addItem(s.activatorItem());
                     sender.sendMessage("Item created");
                     return true;
                 }

@@ -14,9 +14,13 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
+import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 
 import java.util.List;
+
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class GUIEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -118,10 +122,13 @@ public class GUIEvents implements Listener {
         }
 
         if (inv.getType() == InventoryType.SHULKER_BOX) {
-            int id = ShrineGUI.getShrineId(inv);
-            if (id == -1) return;
-
-            manager.getShrine(id).setSymbolItemType(inv);
+            BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(inv);
+            if (res == null) return;
+            if (res.item().getType() == SHRINE_CORE_ITEM_TYPE) {
+                ShrineCore core = manager.getShrine(res.id());
+                core.setSymbolItemType(inv);
+                core.updateShardList();
+            } else ; // FIXME Implement Shard logic on shulker box close
         }
     }
 }

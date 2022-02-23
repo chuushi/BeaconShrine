@@ -13,8 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
-import static sh.chuu.mc.beaconshrine.Vars.*;
-
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
 
@@ -65,11 +63,6 @@ public class ShrineShard extends AbstractShrine {
     @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
         return step == 0;
-    }
-
-    @Override
-    public ItemStack makeShrineActivatorItem() {
-        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, name, chatColor, id, x, z);
     }
 
     public AbstractShrine parent() {

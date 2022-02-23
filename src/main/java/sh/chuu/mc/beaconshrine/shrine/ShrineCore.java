@@ -12,7 +12,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
@@ -20,14 +19,16 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.inventory.meta.CompassMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +63,8 @@ public class ShrineCore extends AbstractShrine {
         this.scrollTotalPurchases = 0;
 
         this.setSymbolItemType(shulker.getInventory());
+
+        updateShardList();
     }
 
     public ShrineCore(int id, ConfigurationSection cs) {
@@ -75,11 +78,16 @@ public class ShrineCore extends AbstractShrine {
 
         String symIT = cs.getString("symIT");
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
+
+        // FIXME Load shard info from config. See save() for reference.
     }
 
-    @Override
-    public ItemStack makeShrineActivatorItem() {
-        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, name, chatColor, id, x, z);
+    public ItemStack activatorItem() {
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, true, name, chatColor, id, x, z);
+    }
+
+    public ItemStack shardActivatorItem() {
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, false, name, chatColor, id, x, z);
     }
 
     @Override
@@ -101,7 +109,7 @@ public class ShrineCore extends AbstractShrine {
     public boolean isValid() {
         Block shulkerBlock = w.getBlockAt(x, y, z);
         BlockState shulkerData = shulkerBlock.getState();
-        if (!(shulkerData instanceof ShulkerBox) || this.id != ShrineGUI.getShrineId(((ShulkerBox) shulkerData).getInventory()))
+        if (!(shulkerData instanceof ShulkerBox sb) || this.id != BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_CORE_ITEM_TYPE))
             return false;
 
         BlockState beaconState = beaconY == -1 ? null : w.getBlockAt(x, beaconY, z).getState();
@@ -165,9 +173,14 @@ public class ShrineCore extends AbstractShrine {
 
         merchant = Bukkit.createMerchant(name + " Scroll Shop");
         trader = p;
-        MerchantRecipe recipe = new MerchantRecipe(createShireWarpItem(p), scrollUses, scrollMax, false);
-        recipe.addIngredient(new ItemStack(Material.DIAMOND, 2));
-        merchant.setRecipes(ImmutableList.of(recipe));
+        MerchantRecipe warpScroll = new MerchantRecipe(createShireWarpItem(p), scrollUses, scrollMax, false);
+        warpScroll.addIngredient(new ItemStack(Material.DIAMOND, 2));
+
+        MerchantRecipe shrineShard = new MerchantRecipe(shardActivatorItem(), 0, 26, false);
+        shrineShard.addIngredient(new ItemStack(SHRINE_SHARD_ITEM_TYPE, 2));
+        shrineShard.addIngredient(new ItemStack(Material.ENDER_PEARL, 1));
+
+        merchant.setRecipes(ImmutableList.of(warpScroll, shrineShard));
         p.openMerchant(merchant, true);
     }
 
@@ -191,15 +204,46 @@ public class ShrineCore extends AbstractShrine {
         return ShrineGUI.createWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
-    protected boolean containsShard(ShrineShard shard) {
+    public boolean containsShard(ShrineShard shard) {
         return shards.contains(shard);
+    }
+
+    public void updateShardList() {
+        shards.clear();
+        for (ItemStack item : getInventory()) {
+            if (item == null || item.getType() != Material.COMPASS) continue;
+
+            ItemMeta meta = item.getItemMeta();
+            if (!(meta instanceof CompassMeta cm) || !cm.hasLodestone()) continue;
+
+            Location lodestone = cm.getLodestone();
+            if (lodestone == null) continue;
+
+            ShulkerBox sb = getShulkerAttachedToLodestone(lodestone);
+            if (sb != null) shards.add(new ShrineShard(id, this, sb));
+        }
+    }
+
+    private ShulkerBox getShulkerAttachedToLodestone(Location location) {
+        Block block = location.getBlock();
+        for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
+            Block b = block.getRelative(face);
+            BlockState blockState = b.getState();
+
+            if (blockState instanceof ShulkerBox sb) {
+                if (id == BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_SHARD_ITEM_TYPE)) {
+                    return sb;
+                }
+            }
+        }
+        return null;
     }
 
     /**
      * This assumes that a Shulker box exists as an inventory
      */
     public void putShrineItem() {
-        getInventory().addItem(makeShrineActivatorItem());
+        getInventory().addItem(activatorItem());
     }
 
     @Override

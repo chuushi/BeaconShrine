@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
+import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.shrineActivatorId;
 
 public class ShrineGUI {
     public static final ItemStack CLOUD_CHEST_ITEM;
@@ -117,27 +118,6 @@ public class ShrineGUI {
             }
         }
         return -1;
-    }
-
-    public static int getShrineId(Inventory inventory) {
-        HashMap<Integer, ? extends ItemStack> ingots = inventory.all(SHRINE_CORE_ITEM_TYPE);
-        for (Map.Entry<Integer, ? extends ItemStack> e : ingots.entrySet()) {
-            int itemId = getShrineId(e.getValue());
-            if (itemId != -1) return itemId;
-        }
-        return -1;
-    }
-
-    public static int getShrineId(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return -1;
-        List<String> lore = meta.getLore();
-        if (lore == null || lore.size() < 3) return -1;
-        try {
-            return Integer.parseInt(lore.get(1).substring(SHIRE_ID_HEADER.length()));
-        } catch (NumberFormatException | IndexOutOfBoundsException ex) {
-            return -1;
-        }
     }
 
     public static ItemStack createShopItem(int stock, long restock) {

@@ -18,7 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 
-import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.*;
+import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class LoreItemUseEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -31,17 +31,16 @@ public class LoreItemUseEvents implements Listener {
         if (item == null
                 || ev.useItemInHand() == Event.Result.DENY
                 || action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK
-                || item.getType() != WARP_SCROLL_MATERIAL
+                || item.getType() != WARP_SCROLL_ITEM_TYPE
                 || b != null && b.getType().isInteractable()
         ) return;
 
-        BeaconShireItemUtils.WarpScroll ws = getWarpScrollData(item);
+        BeaconShireItemUtils.WarpScroll ws = BeaconShireItemUtils.getWarpScrollData(item);
         if (ws == null) return;
 
         Player p = ev.getPlayer();
         World w = p.getWorld();
         Location l = p.getLocation();
-        // TODO Do we want to continue supporting the nether/the end?
         if (w.getEnvironment() != World.Environment.NETHER && w.getHighestBlockYAt(l, HeightMap.MOTION_BLOCKING) > l.getBlockY()) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You require access to sky to warp"));
             return;

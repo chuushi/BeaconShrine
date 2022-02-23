@@ -22,12 +22,13 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
-import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
+import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.shrineActivatorId;
 
 public class ShrineEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -59,14 +60,14 @@ public class ShrineEvents implements Listener {
                 ShulkerBox shulker = cs.shulker; // FIXME Review what changes!!!
                 if (shulker != null) {
                     Inventory inv = shulker.getInventory();
-                    int shrineId = ShrineGUI.getShrineId(inv);
+                    int shrineId = BeaconShireItemUtils.getShrineId(inv, SHRINE_CORE_ITEM_TYPE);
                     if (shrineId == -1) {
                         // new shulker box
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
                         ShrineCore shrine;
-                        int id = ShrineGUI.getShrineId(item);
+                        int id = shrineActivatorId(item);
                         if ((shrine = manager.updateShrine(id, shulker)) == null) {
                             shrine = manager.newShrine(shulker, null);
                         }
@@ -81,6 +82,7 @@ public class ShrineEvents implements Listener {
                 }
             }
         }
+        // TODO Implement similar logic as above for Shrine Shards
 
         ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 1, false); // o(n)
 
@@ -89,7 +91,7 @@ public class ShrineEvents implements Listener {
         Location loc = cs.shulker.getLocation();
         ev.getPlayer().sendMessage("Shulker box: %d %d %d".formatted(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
 
-        int id = ShrineGUI.getShrineId(cs.shulker.getInventory());
+        int id = BeaconShireItemUtils.getShrineId(cs.shulker.getInventory(), cs.isCore ? SHRINE_CORE_ITEM_TYPE : SHRINE_SHARD_ITEM_TYPE);
         if (id != -1) {
             openGUI(ev.getPlayer(), id, cs);
             ev.setCancelled(true);
@@ -106,9 +108,12 @@ public class ShrineEvents implements Listener {
     public void shireShulkerPlace(BlockPlaceEvent ev) {
         BlockState d = ev.getBlock().getState();
         if (d instanceof ShulkerBox sb) {
-            int id = ShrineGUI.getShrineId(sb.getInventory());
-            if (id != -1)
-                manager.updateShrine(id, sb);
+            BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(sb.getInventory());
+            if (res != null) {
+                if (res.item().getType() == SHRINE_CORE_ITEM_TYPE)
+                    manager.updateShrine(res.id(), sb);
+                else ;// FIXME Implement shulker place with Shrine Shard item inside?
+            }
         }
     }
 

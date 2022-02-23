@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import sh.chuu.mc.beaconshrine.Vars;
 import sh.chuu.mc.beaconshrine.utils.ExperienceUtils;
 
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
 public class CloudInventoryLores {
     static final String INVENTORY_NAME = "Shrine Cloud Chest";
     static final Material EXP_ITEM_TYPE = Material.EXPERIENCE_BOTTLE;
-    static final Material TELEPORT_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
+    static final Material TELEPORT_ITEM_TYPE = Vars.WARP_SCROLL_ITEM_TYPE;
 
     private static final String EXP_VALUE_HEADER = ChatColor.DARK_GRAY + "Total exp: ";
     private static final String OLD_LOCATION_HEADER = ChatColor.GRAY + "Old location: ";

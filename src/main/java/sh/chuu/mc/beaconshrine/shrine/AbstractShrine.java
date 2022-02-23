@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
+import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.shrineActivatorId;
 
 public abstract class AbstractShrine {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
@@ -88,7 +89,6 @@ public abstract class AbstractShrine {
 
     public abstract boolean isValid();
     public abstract Inventory getGui(Player p);
-    public abstract ItemStack makeShrineActivatorItem();
 
     public int id() { return id; }
     public World world() { return w; }
@@ -152,8 +152,10 @@ public abstract class AbstractShrine {
 
     public void setSymbolItemType(Inventory inv) {
         for (ItemStack item : inv) {
-            if (item == null || item.getType() == SHRINE_CORE_ITEM_TYPE && ShrineGUI.getShrineId(item) != -1)
-                continue;
+            if (item == null
+                    || shrineActivatorId(item) != -1
+                    || item.getType() == Material.COMPASS // TODO filter only Lodestone Compass
+            ) continue;
             this.symbolItemType = item.getType();
             return;
         }
