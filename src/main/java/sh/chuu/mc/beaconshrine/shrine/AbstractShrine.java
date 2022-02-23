@@ -24,6 +24,7 @@ import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -214,6 +215,28 @@ public abstract class AbstractShrine {
             new WarpSequence(p, newY, ret).runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
             return ret;
         }
+    }
+
+    /**
+     * Applies save data *serialization* onto given ConfigurationSection object
+     * @param cs ConfigurationSection to apply savedata to
+     */
+    public void save(ConfigurationSection cs) {
+        cs.set("name", name);
+        cs.set("color", color == null ? null : color.toString());
+        cs.set("world", w.getName());
+        cs.set("loc", new int[]{x, y, z});
+        cs.set("symIT", symbolItemType == null ? null : symbolItemType.name());
+    }
+
+    public HashMap<String, Object> save() {
+        HashMap<String, Object> ret = new HashMap<>(5);
+        ret.put("name", name);
+        ret.put("color", color == null ? null : color.toString());
+        ret.put("world", w.getName());
+        ret.put("loc", new int[]{x, y, z});
+        ret.put("symIT", symbolItemType == null ? null : symbolItemType.name());
+        return ret;
     }
 
     private class ShrineParticleRunnable extends BukkitRunnable {

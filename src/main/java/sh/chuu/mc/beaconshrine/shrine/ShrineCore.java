@@ -12,6 +12,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
@@ -26,7 +27,9 @@ import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
 
@@ -188,18 +191,6 @@ public class ShrineCore extends AbstractShrine {
         return ShrineGUI.createWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
-    public void save(ConfigurationSection cs) {
-        cs.set("name", name);
-        cs.set("color", color == null ? null : color.toString());
-        cs.set("world", w.getName());
-        cs.set("loc", new int[]{x, z, y, beaconY});
-        cs.set("scTime", firstTradeTime);
-        cs.set("symIT", symbolItemType == null ? null : symbolItemType.name());
-        cs.set("scMax", scrollMax);
-        cs.set("scUses", scrollUses);
-        cs.set("scPurch", scrollTotalPurchases);
-    }
-
     protected boolean containsShard(ShrineShard shard) {
         return shards.contains(shard);
     }
@@ -247,5 +238,19 @@ public class ShrineCore extends AbstractShrine {
 
     public List<ShrineShard> getShards() {
         return shards;
+    }
+
+    @Override
+    public void save(ConfigurationSection cs) {
+        super.save(cs);
+        cs.set("loc", new int[]{x, z, y, beaconY});
+        cs.set("scTime", firstTradeTime);
+        cs.set("scMax", scrollMax);
+        cs.set("scUses", scrollUses);
+        cs.set("scPurch", scrollTotalPurchases);
+
+        List<Map<String, Object>> sh = new ArrayList<>(shards.size());
+        for (ShrineShard ss : shards) { sh.add(ss.save()); }
+        cs.set("sh", sh);
     }
 }
