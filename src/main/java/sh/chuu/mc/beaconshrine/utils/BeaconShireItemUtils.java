@@ -15,15 +15,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 import java.util.UUID;
 
-public class BeaconShireItemUtils {
-    public static final Material WARP_SCROLL_MATERIAL = Material.FLOWER_BANNER_PATTERN;
+import static sh.chuu.mc.beaconshrine.Vars.SHIRE_ID_HEADER;
 
-    private static final String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";
-    private static final String WARP_SCROLL_UUID_PREFIX = ChatColor.DARK_GRAY.toString();
-    private static final String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
+public interface BeaconShireItemUtils {
+    Material WARP_SCROLL_MATERIAL = Material.FLOWER_BANNER_PATTERN;
+
+    String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";
+    String WARP_SCROLL_UUID_PREFIX = ChatColor.DARK_GRAY.toString();
+    String USE_IN_HAND_TO_CONSUME = ChatColor.RED.toString() + ChatColor.ITALIC + "Use in hand to consume";
 
 
-    public static Inventory copyPlayerInventory(Player p, String name) {
+    static Inventory copyPlayerInventory(Player p, String name) {
         ItemStack[] im = p.getInventory().getContents();
         Inventory inv = Bukkit.createInventory(null, 45, name);
         for (int i = 0; i < im.length; i++) {
@@ -33,7 +35,7 @@ public class BeaconShireItemUtils {
         return inv;
     }
 
-    public static ItemStack copyEnderChestToShulkerBox(Player p) {
+    static ItemStack copyEnderChestToShulkerBox(Player p) {
         ItemStack[] ender = p.getEnderChest().getContents();
         ItemStack item = new ItemStack(Material.GREEN_SHULKER_BOX);
 
@@ -48,7 +50,7 @@ public class BeaconShireItemUtils {
         return item;
     }
 
-    public static ItemStack createWarpScroll(int id, String name, ChatColor cc, Player p) {
+    static ItemStack createWarpScroll(int id, String name, ChatColor cc, Player p) {
         ItemStack ret = new ItemStack(WARP_SCROLL_MATERIAL);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
@@ -66,7 +68,7 @@ public class BeaconShireItemUtils {
         return ret;
     }
 
-    public static WarpScroll getWarpScrollData(ItemStack item) {
+    static WarpScroll getWarpScrollData(ItemStack item) {
         if (item == null || item.getType() != WARP_SCROLL_MATERIAL) return null;
         ItemMeta im = item.getItemMeta();
         if (im == null) return null;
@@ -77,6 +79,37 @@ public class BeaconShireItemUtils {
                 UUID.fromString(lore.get(3).substring(WARP_SCROLL_UUID_PREFIX.length())));
     }
 
-    public record WarpScroll(int id, UUID owner) {
+    record WarpScroll(int id, UUID owner) {
     }
-}
+    default ItemStack getItemScroll(int id) {
+        ItemStack item = new ItemStack(Material.FLOWER_BANNER_PATTERN);
+
+        return item;
+    }
+
+    default int getId(ItemStack item) {
+        return 0;
+    }
+
+    default ItemStack getGuiScroll(int id) {
+        return null;
+    }
+
+    static ItemStack shrineActivatorItem(Material item, String name, ChatColor cc, int id, int x, int z) throws IllegalArgumentException {
+        ItemStack ret = new ItemStack(item);
+
+        ItemMeta im = ret.getItemMeta();
+        if (im == null) throw new IllegalArgumentException("Item does not have ItemMeta!");
+        String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
+        im.setDisplayName(color + "Shrine Activator");
+        im.setLore(ImmutableList.of(
+                color + name,
+                SHIRE_ID_HEADER + id,
+                ChatColor.DARK_GRAY + "at " + x + ", " + z
+        ));
+        im.addEnchant(Enchantment.DURABILITY, 1, true);
+        im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+        ret.setItemMeta(im);
+        return ret;
+    }}

@@ -21,7 +21,6 @@ import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import sh.chuu.mc.beaconshrine.ShrineItemStack;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
@@ -77,7 +76,7 @@ public class ShrineCore extends AbstractShrine {
 
     @Override
     public ItemStack makeShrineActivatorItem() {
-        return ShrineItemStack.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, name, chatColor, id, x, z);
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, name, chatColor, id, x, z);
     }
 
     @Override

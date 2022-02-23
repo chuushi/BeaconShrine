@@ -37,7 +37,8 @@ public class ShrineManager {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final File configFile;
     private final YamlConfiguration config;
-    private final Map<Integer, ShrineCore> shrines = new HashMap<>();
+    private final Map<Integer, ShrineCore> cores = new HashMap<>();
+    private final Set<ShrineShard> shards = new HashSet<>();
     private final Map<Player, GuiView> whichGui = new LinkedHashMap<>();
     private final Set<Player> attuning = new LinkedHashSet<>();
     private final Set<Player> warping = new LinkedHashSet<>();
@@ -74,13 +75,13 @@ public class ShrineManager {
 
     public ShrineCore newShrine(ShulkerBox s, Beacon b) {
         ShrineCore ret = new ShrineCore(nextId, s, b);
-        shrines.put(nextId, ret);
+        cores.put(nextId, ret);
         nextId++;
         return ret;
     }
 
     public boolean removeShrine(int id) {
-        ShrineCore s = shrines.remove(id);
+        ShrineCore s = cores.remove(id);
         if (s == null || s.isValid()) return false;
         if (nextId == id + 1) nextId--;
         config.set("s" + id, null);
@@ -104,7 +105,7 @@ public class ShrineManager {
         }
         p.sendMessage("Pass: 1");
 
-        ShrineCore core = shrines.get(id);
+        ShrineCore core = cores.get(id);
         AbstractShrine s = null;
         if (shardLocation != null) {
             p.sendMessage("Pass: 1.1");
@@ -197,7 +198,7 @@ public class ShrineManager {
         for (int i = 0; i < last; i++) {
             int id = wids.get(i);
 
-            ShrineCore sm = shrines.get(id);
+            ShrineCore sm = cores.get(id);
             ItemStack item = sm.createWarpScrollGuiItem(id == currentId);
             ret.setItem(i, item);
         }
@@ -230,7 +231,7 @@ public class ShrineManager {
         }
 
         if (type == WARP_LIST_ITEM_TYPE) {
-            ShrineCore shrine = shrines.get(id);
+            ShrineCore shrine = cores.get(id);
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -248,7 +249,7 @@ public class ShrineManager {
         }
 
         if (type == SHOP_ITEM_TYPE) {
-            ShrineCore shrine = shrines.get(id);
+            ShrineCore shrine = cores.get(id);
             if (shrine.trader() != null) {
                 return;
             }
@@ -269,7 +270,7 @@ public class ShrineManager {
                 // Shulker box within
                 p.closeInventory();
                 ShrineGUI.clickNoise(p);
-                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrines.get(id).getInventory()), 1L);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(cores.get(id).getInventory()), 1L);
             }
         }
     }
@@ -289,14 +290,14 @@ public class ShrineManager {
     public ShrineCore updateShrine(int id, ShulkerBox s) {
         if (id == -1 || s.getCustomName() == null)
             return null;
-        ShrineCore shrine = shrines.get(id);
+        ShrineCore shrine = cores.get(id);
         if (shrine == null) return null;
         shrine.setShulker(s, s.getType() != Material.SHULKER_BOX);
         return shrine;
     }
 
     public void loadShrines() {
-        if (!shrines.isEmpty()) return; // TODO Clean up logic
+        if (!cores.isEmpty()) return; // TODO Clean up logic
         for (String key : config.getKeys(false)) {
             if (!key.startsWith("s"))
                 continue;
@@ -309,12 +310,12 @@ public class ShrineManager {
             ConfigurationSection cs = config.getConfigurationSection(key);
             nextId = Math.max(id + 1, nextId);
             //noinspection ConstantConditions Never null since it's from an existing key
-            shrines.put(id, new ShrineCore(id, cs));
+            cores.put(id, new ShrineCore(id, cs));
         }
     }
 
     private void saveData() {
-        for (Map.Entry<Integer, ShrineCore> is : shrines.entrySet()) {
+        for (Map.Entry<Integer, ShrineCore> is : cores.entrySet()) {
             String section = "s" + is.getKey();
             ConfigurationSection cs = config.getConfigurationSection(section);
             if (cs == null) cs = config.createSection(section);
@@ -328,10 +329,10 @@ public class ShrineManager {
     }
 
     public ShrineCore getShrine(int id) {
-        return shrines.get(id);
+        return cores.get(id);
     }
 
-    public Map<Integer, ShrineCore> getShrines() {
-        return shrines;
+    public Map<Integer, ShrineCore> getShrineCores() {
+        return cores;
     }
 }

@@ -11,8 +11,8 @@ import org.bukkit.block.BlockState;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockUtils {
-    public static Block[] getSurrounding8(Block b) {
+public interface BlockUtils {
+    static Block[] getSurrounding8(Block b) {
         return new Block[]{
                 b.getRelative(BlockFace.SOUTH),
                 b.getRelative(BlockFace.SOUTH_WEST),
@@ -31,7 +31,7 @@ public class BlockUtils {
      * @param radius
      * @return
      */
-    public static List<Block> getSurroundingStage2(Block b, int radius) {
+    static List<Block> getSurroundingStage2(Block b, int radius) {
         final World w = b.getWorld();
         final int x = b.getX();
         final int y = b.getY();
@@ -52,7 +52,7 @@ public class BlockUtils {
         return ret;
     }
 
-    public static Beacon getBeaconBelow(Block b, int tier) {
+    static Beacon getBeaconBelow(Block b, int tier) {
         while (b.getY() > -61) {
             BlockState state = b.getState();
 
@@ -64,7 +64,7 @@ public class BlockUtils {
         return null;
     }
 
-    public static Material getShulkerBoxFromDyeColor(DyeColor color) {
+    static Material getShulkerBoxFromDyeColor(DyeColor color) {
         if (color == null) return Material.SHULKER_BOX;
         return switch (color) {
             // <editor-fold defaultstate="collapsed" desc="shulkerBoxFromDyeColor">
@@ -88,7 +88,7 @@ public class BlockUtils {
         };
     }
 
-    public static boolean hasInteraction(Material block) {
+    static boolean hasInteraction(Material block) {
         String n = block.name();
         if (n.endsWith("_STAIRS")
                 || n.endsWith("_FENCE")

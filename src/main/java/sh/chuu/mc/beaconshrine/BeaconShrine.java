@@ -62,7 +62,7 @@ public class BeaconShrine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new LoreItemUseEvents(), this);
         getServer().getPluginManager().registerEvents(new GUIEvents(), this);
 
-        shrineManager.getShrines().values().forEach(s -> {
+        shrineManager.getShrineCores().values().forEach(s -> {
             if (!s.hasParticles() && s.world().isChunkLoaded(s.x() >> 4, s.z() >> 4) && s.isValid()) {
                 s.startParticles();
             }

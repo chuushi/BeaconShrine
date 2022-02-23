@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import sh.chuu.mc.beaconshrine.ShrineItemStack;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
@@ -69,7 +69,7 @@ public class ShrineShard extends AbstractShrine {
 
     @Override
     public ItemStack makeShrineActivatorItem() {
-        return ShrineItemStack.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, name, chatColor, id, x, z);
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, name, chatColor, id, x, z);
     }
 
     public AbstractShrine parent() {

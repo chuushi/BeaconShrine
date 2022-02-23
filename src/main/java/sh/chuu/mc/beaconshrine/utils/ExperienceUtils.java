@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
  *
  * @author Jikoo
  */
-public class ExperienceUtils {
+public interface ExperienceUtils {
 
     /**
      * Calculates a player's total exp based on level and progress to next.
@@ -18,7 +18,7 @@ public class ExperienceUtils {
      *
      * @return the amount of exp the Player has
      */
-    public static int getExp(Player player) {
+    static int getExp(Player player) {
         return getExpFromLevel(player.getLevel())
                 + Math.round(getExpToNext(player.getLevel()) * player.getExp());
     }
@@ -38,7 +38,7 @@ public class ExperienceUtils {
      *
      * @return the total experience calculated
      */
-    public static int getExpFromLevel(int level) {
+    static int getExpFromLevel(int level) {
         if (level > 30) {
             return (int) (4.5 * level * level - 162.5 * level + 2220);
         }
@@ -55,7 +55,7 @@ public class ExperienceUtils {
      *
      * @return the level calculated
      */
-    public static double getLevelFromExp(long exp) {
+    static double getLevelFromExp(long exp) {
         if (exp > 1395) {
             return (Math.sqrt(72 * exp - 54215) + 325) / 18;
         }
@@ -95,7 +95,7 @@ public class ExperienceUtils {
      * @param player the Player affected
      * @param exp the amount of experience to add or remove
      */
-    public static void changeExp(Player player, int exp) {
+    static void changeExp(Player player, int exp) {
         exp += getExp(player);
 
         if (exp < 0) {

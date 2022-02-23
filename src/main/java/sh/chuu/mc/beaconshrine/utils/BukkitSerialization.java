@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Methods copy-pasted from <a href="https://gist.github.com/graywolf336/8153678">graywolf336's gist</a>
  */
-public class BukkitSerialization {
+public interface BukkitSerialization {
     /**
      *
      * A method to serialize an {@link ItemStack} array to Base64 String.
@@ -23,7 +23,7 @@ public class BukkitSerialization {
      * @return Base64 string of the items.
      * @throws IllegalStateException
      */
-    public static String itemStackArrayToBase64(ItemStack[] items) throws IllegalStateException {
+    static String itemStackArrayToBase64(ItemStack[] items) throws IllegalStateException {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
@@ -53,7 +53,7 @@ public class BukkitSerialization {
      * @return ItemStack array created from the Base64 string.
      * @throws IOException
      */
-    public static ItemStack[] itemStackArrayFromBase64(String data) throws IOException {
+    static ItemStack[] itemStackArrayFromBase64(String data) throws IOException {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);

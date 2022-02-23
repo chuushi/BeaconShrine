@@ -9,13 +9,13 @@ import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
 
 public class ShrineParticleEvents implements Listener {
-    private ShrineManager manager = BeaconShrine.getInstance().getShrineManager();
+    private final ShrineManager manager = BeaconShrine.getInstance().getShrineManager();
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void startParticles(ChunkLoadEvent ev) {
         int x = ev.getChunk().getX();
         int z = ev.getChunk().getZ();
-        manager.getShrines().values().forEach(s -> {
+        manager.getShrineCores().values().forEach(s -> {
             if (ev.getWorld() == s.world() && x == s.x() >> 4 && z == s.z() >> 4 && s.isValid()) {
                 s.startParticles();
             }
@@ -26,7 +26,7 @@ public class ShrineParticleEvents implements Listener {
     public void stopParticles(ChunkUnloadEvent ev) {
         int x = ev.getChunk().getX();
         int z = ev.getChunk().getZ();
-        manager.getShrines().values().forEach(s -> {
+        manager.getShrineCores().values().forEach(s -> {
             if (ev.getWorld() == s.world() && x == s.x() >> 4 && z == s.z() >> 4) {
                 s.endParticles();
             }
