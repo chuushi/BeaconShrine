@@ -103,7 +103,7 @@ public class ShrineEvents implements Listener {
 
     private void openGUI(Player p, int id, ClickedShulker sh) {
         // FIXME Implement differentiation between Shrine Core and Shrine Shard
-        if (!manager.openShrineGui(p, id, sh.isCore ? null : sh.shulker.getLocation()))
+        if (!manager.openShrineGui(p, id, sh.shulker, sh.isCore))
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
     }
 

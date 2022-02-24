@@ -26,6 +26,7 @@ import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
@@ -67,18 +68,38 @@ public abstract class AbstractShrine {
         this.midZ = z + 0.5d;
     }
 
-    AbstractShrine(int id, ConfigurationSection cs) {
+    AbstractShrine(int id, ConfigurationSection cs, boolean xzy) {
         this.id = id;
 
         List<Integer> loc = cs.getIntegerList("loc");
         //noinspection ConstantConditions
         this.w = Bukkit.getWorld(cs.getString("world"));
         this.x = loc.get(0);
-        this.z = loc.get(1);
-        this.y = loc.get(2);
+        this.y = loc.get(xzy ? 2 : 1);
+        this.z = loc.get(xzy ? 1 : 2);
         this.name = cs.getString("name");
 
         String colorStr = cs.getString("color");
+        this.color = colorStr == null ? null : DyeColor.valueOf(colorStr);
+        this.chatColor = this.color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
+
+        this.midX = x + 0.5d;
+        this.midY = y;
+        this.midZ = z + 0.5d;
+    }
+
+    AbstractShrine(int id, Map<?, ?> cs) {
+        this.id = id;
+
+        @SuppressWarnings("unchecked")
+        List<Integer> loc = (List<Integer>) cs.get("loc");
+        this.w = Bukkit.getWorld((String) cs.get("world"));
+        this.x = loc.get(0);
+        this.y = loc.get(1);
+        this.z = loc.get(2);
+        this.name = (String) cs.get("name");
+
+        String colorStr = (String) cs.get("color");
         this.color = colorStr == null ? null : DyeColor.valueOf(colorStr);
         this.chatColor = this.color == null ? ChatColor.RESET : ChatColor.of("#" + Integer.toString(color.getColor().asRGB(), 0x10));
 
@@ -237,10 +258,10 @@ public abstract class AbstractShrine {
     public HashMap<String, Object> save() {
         HashMap<String, Object> ret = new HashMap<>(6);
         ret.put("name", name);
-        ret.put("color", color == null ? null : color.toString());
         ret.put("world", w.getName());
         ret.put("loc", new int[]{x, y, z});
-        ret.put("symIT", symbolItemType == null ? null : symbolItemType.name());
+        if (color != null) ret.put("color", color.toString());
+        if (symbolItemType != null) ret.put("symIT", symbolItemType.name());
         return ret;
     }
 

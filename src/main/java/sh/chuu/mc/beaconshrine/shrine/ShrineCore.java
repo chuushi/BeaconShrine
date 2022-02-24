@@ -23,7 +23,6 @@ import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
@@ -68,7 +67,7 @@ public class ShrineCore extends AbstractShrine {
     }
 
     public ShrineCore(int id, ConfigurationSection cs) {
-        super(id, cs);
+        super(id, cs, true);
         this.firstTradeTime = cs.getLong("scTime", 0);
         this.scrollMax = cs.getInt("scMax", 3);
         this.scrollUses = cs.getInt("scUses", 0);
@@ -79,7 +78,9 @@ public class ShrineCore extends AbstractShrine {
         String symIT = cs.getString("symIT");
         this.symbolItemType = symIT == null ? null : Material.getMaterial(symIT);
 
-        // FIXME Load shard info from config. See save() for reference.
+        List<Map<?, ?>> sh = cs.getMapList("sh");
+        for (Map<?, ?> ss : sh)
+            shards.add(new ShrineShard(id, this, ss));
     }
 
     public ItemStack activatorItem() {

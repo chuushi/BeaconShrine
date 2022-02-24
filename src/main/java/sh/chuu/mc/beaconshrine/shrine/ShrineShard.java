@@ -12,15 +12,25 @@ import org.bukkit.inventory.Inventory;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
-    private Location lodestone;
+    private Location lodestone; // TODO Replace with relative block face of Lodestone instead
 
     ShrineShard(int id, ShrineCore parent, ShulkerBox shulker, Location lodestone) {
         super(id, shulker);
         this.parent = parent;
         this.lodestone = lodestone;
+    }
+
+    public ShrineShard(int id, ShrineCore parent, Map<?, ?> ss) {
+        super(id, ss);
+        this.parent = parent;
+        @SuppressWarnings("unchecked")
+        List<Integer> loc = (List<Integer>) ss.get("lodestone");
+        this.lodestone = new Location(w, loc.get(0), loc.get(1), loc.get(2));
     }
 
     /**

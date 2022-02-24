@@ -46,8 +46,18 @@ public class ShrineManager {
 
     public record GuiView(AbstractShrine shrine, GuiType type) {}
 
+    /**
+     * Enum describes what kind of view the player is viewing
+     */
     public enum GuiType {
-        HOME, SHOP, WARP_LIST
+        /** Shrine Core main view */
+        HOME_CORE,
+        /** Shrine Core main view */
+        HOME_SHARD,
+        /** Shrine shop view */
+        SHOP,
+        /** Shrine Warp view */
+        WARP_LIST
         // TODO add GUI types + Link it with shrine ID stuffs
     }
 
@@ -92,12 +102,14 @@ public class ShrineManager {
      * Opens GUI for the corresponding shard
      * @param p Player
      * @param id ID
-     * @param shardLocation Location if shard, null otherwise
+     * @param shulker Shulker box
+     * @param isCore Whether the Shrine type is Core
      * @return
      */
-    public boolean openShrineGui(Player p, int id, Location shardLocation) {
+    public boolean openShrineGui(Player p, int id, ShulkerBox shulker, boolean isCore) {
+
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
-            if (shardLocation == null)
+            if (isCore)
                 doAttuneAnimation(p, id);
             else ; // TODO something about strong energy emitting from this
             return true;
@@ -105,15 +117,15 @@ public class ShrineManager {
 
         ShrineCore core = cores.get(id);
         AbstractShrine s = null;
-        if (shardLocation != null) {
+        if (isCore) {
+            s = core;
+        } else {
             for (ShrineShard ss : core.getShards()) {
-                if (ss.getShulkerLocation(false).equals(shardLocation)) {
+                if (ss.getShulkerLocation(false).equals(shulker.getLocation())) {
                     s = ss;
                     break;
                 }
             }
-        } else {
-            s = core;
         }
         if (s == null || !s.isValid()) return false;
 
@@ -121,7 +133,7 @@ public class ShrineManager {
         Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);
         ParticleUtils.beam(loc, vector, s.dustColor()); // TODO Move particle logic to ShrineCore/ShrineShard
         p.openInventory(s.getGui(p));
-        whichGui.put(p, new GuiView(s, GuiType.HOME));
+        whichGui.put(p, new GuiView(s, isCore ? GuiType.HOME_CORE : GuiType.HOME_SHARD));
         return true;
     }
 
@@ -178,7 +190,7 @@ public class ShrineManager {
         warping.remove(p);
     }
 
-    Inventory getWarpGui(Player p, int currentId) {
+    Inventory getWarpGui(Player p, AbstractShrine shrine) {
         List<Integer> wids = plugin.getCloudManager().getTunedShrineList(p);
         int slots = (wids.size()/9 + 1) * 9;
         if (slots > 54) {
@@ -193,7 +205,7 @@ public class ShrineManager {
             int id = wids.get(i);
 
             ShrineCore sm = cores.get(id);
-            ItemStack item = sm.createWarpScrollGuiItem(id == currentId);
+            ItemStack item = sm.createWarpScrollGuiItem(id == shrine.id());
             ret.setItem(i, item);
         }
         return ret;
@@ -215,7 +227,7 @@ public class ShrineManager {
         return whichGui.get(p);
     }
 
-    public void clickedGui(int id, ItemStack slot, Player p) {
+    public void clickedGui(AbstractShrine shrine, ItemStack slot, Player p) {
         Material type = slot.getType();
         if (type == CLOUD_CHEST_ITEM_TYPE) {
             p.closeInventory();
@@ -225,12 +237,11 @@ public class ShrineManager {
         }
 
         if (type == WARP_LIST_ITEM_TYPE) {
-            ShrineCore shrine = cores.get(id);
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
-                p.openInventory(getWarpGui(p, id));
+                p.openInventory(getWarpGui(p, shrine)); // TODO Not valid case for Shrine Shards
             }, 1L);
             return;
         }
@@ -242,16 +253,15 @@ public class ShrineManager {
             return;
         }
 
-        if (type == SHOP_ITEM_TYPE) {
-            ShrineCore shrine = cores.get(id);
-            if (shrine.trader() != null) {
+        if (type == SHOP_ITEM_TYPE && shrine instanceof ShrineCore sc) {
+            if (sc.trader() != null) {
                 return;
             }
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                whichGui.put(p, new GuiView(shrine, GuiType.SHOP));
-                shrine.openMerchant(p);
+                whichGui.put(p, new GuiView(sc, GuiType.SHOP));
+                sc.openMerchant(p);
             }, 1L);
             return;
         }
@@ -264,7 +274,7 @@ public class ShrineManager {
                 // Shulker box within
                 p.closeInventory();
                 ShrineGUI.clickNoise(p);
-                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(cores.get(id).getInventory()), 1L);
+                Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(shrine.getInventory()), 1L);
             }
         }
     }

@@ -31,6 +31,7 @@ public class GUIEvents implements Listener {
         Player p = (Player) ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
         ShrineManager.GuiView gui = manager.getGuiView(p);
+
         if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
             return;
 
@@ -67,8 +68,8 @@ public class GUIEvents implements Listener {
         ev.setCancelled(true);
         if (item == null) return;
 
-        if (gui.type() == ShrineManager.GuiType.HOME) {
-            manager.clickedGui(gui.shrine().id(), item, p);
+        if (gui.type() == ShrineManager.GuiType.HOME_CORE || gui.type() == ShrineManager.GuiType.HOME_SHARD) {
+            manager.clickedGui(gui.shrine(), item, p);
         }
     }
 
