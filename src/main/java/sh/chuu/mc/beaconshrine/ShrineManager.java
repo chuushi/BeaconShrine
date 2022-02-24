@@ -97,31 +97,25 @@ public class ShrineManager {
      */
     public boolean openShrineGui(Player p, int id, Location shardLocation) {
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
-            p.sendMessage("Pass: 0.1");
             if (shardLocation == null)
                 doAttuneAnimation(p, id);
             else ; // TODO something about strong energy emitting from this
             return true;
         }
-        p.sendMessage("Pass: 1");
 
         ShrineCore core = cores.get(id);
         AbstractShrine s = null;
         if (shardLocation != null) {
-            p.sendMessage("Pass: 1.1");
             for (ShrineShard ss : core.getShards()) {
-                if (ss.getShulkerLocation() == shardLocation) {
+                if (ss.getShulkerLocation(false).equals(shardLocation)) {
                     s = ss;
                     break;
                 }
             }
         } else {
-            p.sendMessage("Pass: 1.2");
             s = core;
         }
         if (s == null || !s.isValid()) return false;
-
-        p.sendMessage("Pass: 2");
 
         Location loc = p.getLocation();
         Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);

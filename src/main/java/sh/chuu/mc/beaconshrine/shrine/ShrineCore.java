@@ -220,11 +220,16 @@ public class ShrineCore extends AbstractShrine {
             if (lodestone == null) continue;
 
             ShulkerBox sb = getShulkerAttachedToLodestone(lodestone);
-            if (sb != null) shards.add(new ShrineShard(id, this, sb));
+            if (sb != null) shards.add(new ShrineShard(id, this, sb, lodestone));
         }
     }
 
-    private ShulkerBox getShulkerAttachedToLodestone(Location location) {
+    /**
+     * Find valid Shulker Box of this Shrine attached to lodestone
+     * @param location Location of Lodestone
+     * @return the ShulkerBox instance if valid, else null
+     */
+    public ShulkerBox getShulkerAttachedToLodestone(Location location) {
         Block block = location.getBlock();
         for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
             Block b = block.getRelative(face);

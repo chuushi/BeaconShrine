@@ -9,16 +9,18 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
+
+import java.util.HashMap;
 
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
+    private Location lodestone;
 
-    ShrineShard(int id, ShrineCore parent, ShulkerBox shulker) {
+    ShrineShard(int id, ShrineCore parent, ShulkerBox shulker, Location lodestone) {
         super(id, shulker);
         this.parent = parent;
+        this.lodestone = lodestone;
     }
 
     /**
@@ -32,12 +34,27 @@ public class ShrineShard extends AbstractShrine {
     @Override
     public boolean isValid() {
         Block shulker = w.getBlockAt(x, y, z);
-        Block netherite = shulker.getRelative(BlockFace.DOWN);
         return shulker.getState() instanceof ShulkerBox s
                 && s.getCustomName() != null
-                && netherite.getType() == Material.NETHERITE_BLOCK
                 && parent.isValid()
-                && parent.containsShard(this);
+                && parent.containsShard(this)
+                && getLodestone() != null;
+    }
+
+    public Block getLodestone() {
+        Block lode = lodestone.getBlock();
+        if (lode.getType() == Material.LODESTONE)
+            return lode;
+
+        Block shulker = w.getBlockAt(x, y, z);
+        for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
+            Block b = shulker.getRelative(face);
+            if (b.getType() == Material.LODESTONE) {
+                this.lodestone = b.getLocation();
+                return b;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -65,8 +82,14 @@ public class ShrineShard extends AbstractShrine {
         return step == 0;
     }
 
-    public AbstractShrine parent() {
+    public ShrineCore parent() {
         return parent;
     }
 
+    @Override
+    public HashMap<String, Object> save() {
+        HashMap<String, Object> ret = super.save();
+        ret.put("lodestone", new int[]{lodestone.getBlockX(), lodestone.getBlockY(), lodestone.getBlockZ()});
+        return ret;
+    }
 }

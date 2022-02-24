@@ -43,7 +43,8 @@ public class ShrineEvents implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
     public void shrineClick(PlayerInteractEvent ev) { // FIXME Excessive Event Calls
-        if (ev.getPlayer().isSneaking()
+        Player p = ev.getPlayer();
+        if (p.isSneaking()
                 || ev.useInteractedBlock() == Event.Result.DENY
                 || ev.getHand() != EquipmentSlot.HAND
                 || ev.getAction() != Action.RIGHT_CLICK_BLOCK
@@ -51,9 +52,12 @@ public class ShrineEvents implements Listener {
                 || BlockUtils.hasInteraction(ev.getClickedBlock().getType())
         ) return;
 
-        // New shrine detection - take away ingot
         ItemStack item = ev.getItem();
         if (item != null) {
+            if (item.getType() == Material.COMPASS && ev.getClickedBlock().getType() == Material.LODESTONE)
+                return;
+
+            // New shrine detection - take away ingot
             if (ev.useItemInHand() == Event.Result.DENY) return;
             if (item.getType() == SHRINE_CORE_ITEM_TYPE) { // TODO  || item.getType() == SHRINE_SHARD_ITEM_TYPE
                 ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 4, false);
@@ -76,7 +80,7 @@ public class ShrineEvents implements Listener {
                         shrine.putShrineItem();
                         return;
                     } else {
-                        openGUI(ev.getPlayer(), shrineId, cs);
+                        openGUI(p, shrineId, cs);
                         ev.setCancelled(true);
                     }
                 }
@@ -88,12 +92,11 @@ public class ShrineEvents implements Listener {
 
         if (cs == null) return;
 
-        Location loc = cs.shulker.getLocation();
-        ev.getPlayer().sendMessage("Shulker box: %d %d %d".formatted(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-
         int id = BeaconShireItemUtils.getShrineId(cs.shulker.getInventory(), cs.isCore ? SHRINE_CORE_ITEM_TYPE : SHRINE_SHARD_ITEM_TYPE);
         if (id != -1) {
-            openGUI(ev.getPlayer(), id, cs);
+            openGUI(p, id, cs);
+            p.swingMainHand();
+
             ev.setCancelled(true);
         }
     }

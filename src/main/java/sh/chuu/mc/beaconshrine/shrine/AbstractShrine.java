@@ -95,7 +95,10 @@ public abstract class AbstractShrine {
     public int x() { return x; }
     public int y() { return y; }
     public int z() { return z; }
-    public Location getShulkerLocation() { return new Location(w, x + 0.5, y + 0.5, z + 0.5); }
+    public Location getShulkerLocation(boolean centerOnBlock) {
+        double d = centerOnBlock ? 0.5 : 0.0;
+        return new Location(w, x + d, y + d, z + d);
+    }
     public String name() { return name; }
     public Color color() { return color == null ? Color.WHITE : color.getColor(); }
     public Particle.DustOptions dustColor() { return new Particle.DustOptions(color(), 1); }
@@ -205,7 +208,7 @@ public abstract class AbstractShrine {
             if (from != null) {
                 vector = ParticleUtils.getDiff(from.x, from.y, from.z, loc);
                 ParticleUtils.shrineIgnitionSound(p);
-                ParticleUtils.beam(from.getShulkerLocation(), up, dustColor());
+                ParticleUtils.beam(from.getShulkerLocation(true), up, dustColor());
                 ParticleUtils.beam(loc, vector, dustColor());
             } else {
                 ParticleUtils.beam(loc, up, dustColor());
@@ -232,7 +235,7 @@ public abstract class AbstractShrine {
     }
 
     public HashMap<String, Object> save() {
-        HashMap<String, Object> ret = new HashMap<>(5);
+        HashMap<String, Object> ret = new HashMap<>(6);
         ret.put("name", name);
         ret.put("color", color == null ? null : color.toString());
         ret.put("world", w.getName());
