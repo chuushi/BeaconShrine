@@ -111,7 +111,9 @@ public class ShrineManager {
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
             if (isCore)
                 doAttuneAnimation(p, id);
-            else ; // TODO something about strong energy emitting from this
+            else
+			// TODO Move to Vars
+				p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You cannot deciper this shard's origin"));
             return true;
         }
 

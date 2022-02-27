@@ -154,14 +154,14 @@ public class ShrineCore extends AbstractShrine {
         // Start making inventory
         Inventory gui = Bukkit.createInventory(null, InventoryType.DISPENSER, chatColor + name);
         gui.setItem(0, ShrineGUI.shulkerBox(invState, color));
-        gui.setItem(2, ShrineGUI.CLOUD_CHEST_ITEM);
-        gui.setItem(4, ShrineGUI.WARP_LIST_ITEM);
+        gui.setItem(1, ShrineGUI.WARP_LIST_ITEM);
+        gui.setItem(4, ShrineGUI.SHARD_LIST_ITEM);
         // FIXME Shop Item amount desync (shows 0) after fully restocked
-        gui.setItem(7, ShrineGUI.createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
-        // TODO add other shard list
 
         // Add Ender Chest if it exists in Shulker inventory
-        if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(1, ShrineGUI.ENDER_CHEST_ITEM);
+        gui.setItem(6, ShrineGUI.CLOUD_CHEST_ITEM);
+        gui.setItem(7, ShrineGUI.createShopItem(trader == null ? scrollMax - scrollUses : -1, firstTradeTime));
+        if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(8, ShrineGUI.ENDER_CHEST_ITEM);
         return gui;
     }
 

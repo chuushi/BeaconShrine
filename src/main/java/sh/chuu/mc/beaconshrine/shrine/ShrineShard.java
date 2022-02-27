@@ -86,7 +86,7 @@ public class ShrineShard extends AbstractShrine {
 
         // Add Ender Chest if it exists in Shulker inventory
         if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(4, ShrineGUI.ENDER_CHEST_ITEM);
-        // TODO add other shard list
+        gui.setItem(2, ShrineGUI.SHARD_LIST_ITEM);
         // TODO add direct to main shrine
         return gui;
     }

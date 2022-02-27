@@ -109,7 +109,7 @@ public abstract class AbstractShrine {
     }
 
     public abstract boolean isValid();
-    public abstract Inventory getGui(Player p);
+    public abstract Inventory getGui(Player p); // TODO Change unclear naming - this does NOT get a GUI. It opens a GUI to a player.
     public abstract ItemStack activatorItem();
 
     public int id() { return id; }

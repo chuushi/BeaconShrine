@@ -17,6 +17,7 @@ public interface Vars {
     Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;
     Material WARP_LIST_ITEM_TYPE = Material.SKULL_BANNER_PATTERN;
     Material WARP_SCROLL_ITEM_TYPE = Material.FLOWER_BANNER_PATTERN;
+    Material SHARD_LIST_ITEM_TYPE = Material.AMETHYST_SHARD;
     int GLOBAL_WARP_COOLDOWN = 300000;
 
     String WARP_SCROLL_SHRINE_ID_PREFIX = ChatColor.DARK_GRAY + "Shrine ID: ";

@@ -28,6 +28,7 @@ public class ShrineGUI {
     public static final ItemStack SHOP_ITEM;
     public static final ItemStack ENDER_CHEST_ITEM;
     public static final ItemStack WARP_LIST_ITEM;
+    public static final ItemStack SHARD_LIST_ITEM;
     static final long RESTOCK_TIMER = 3600000; // 1 hour
 
     static {
@@ -40,9 +41,14 @@ public class ShrineGUI {
 
         ENDER_CHEST_ITEM = createGuiItem("Open Ender Chest", ENDER_CHEST_ITEM_TYPE, null, false);
 
-        WARP_LIST_ITEM = createGuiItem("Warp to...",
+        WARP_LIST_ITEM = createGuiItem("Warp to another Shrine...",
                 WARP_LIST_ITEM_TYPE,
                 ImmutableList.of(ChatColor.GRAY + "Warp to any tuned shrines"),
+                true);
+
+        SHARD_LIST_ITEM = createGuiItem("Warp to a Shard...",
+                SHARD_LIST_ITEM_TYPE,
+                ImmutableList.of(ChatColor.GRAY + "Warp to any tuned shards within this shrine cluster"),
                 true);
         // TODO change item and meta, and add gui event to this
     }

@@ -101,7 +101,6 @@ public class ShrineEvents implements Listener {
                 }
             }
         }
-        // TODO Implement similar logic as above for Shrine Shards
 
         ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 1, false); // o(n)
 
