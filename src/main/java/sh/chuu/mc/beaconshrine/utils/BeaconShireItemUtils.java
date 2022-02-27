@@ -12,7 +12,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -118,10 +117,10 @@ public interface BeaconShireItemUtils {
     }
 
     record ShrineIdResult(int id, ItemStack item) {}
-    static ShrineIdResult getShrineId(Inventory inventory) { // FIXME Go through this because shards
+    static ShrineIdResult getShrineId(Inventory inventory) {
         for (ItemStack i : inventory) {
             if (i == null
-                    || i.getType() != SHRINE_CORE_ITEM_TYPE && i.getType() != SHRINE_SHARD_ITEM_TYPE
+                    || i.getType() != SHRINE_CORE_ACTIVATOR_ITEM_TYPE && i.getType() != SHRINE_SHARD_ACTIVATOR_ITEM_TYPE
             ) continue;
             int itemId = shrineActivatorId(i);
             if (itemId != -1) return new ShrineIdResult(itemId, i);

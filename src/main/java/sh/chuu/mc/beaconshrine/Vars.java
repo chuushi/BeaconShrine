@@ -6,8 +6,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
 
 public interface Vars {
-    Material SHRINE_CORE_ITEM_TYPE = Material.NETHERITE_INGOT;
-    Material SHRINE_SHARD_ITEM_TYPE = Material.AMETHYST_SHARD;
+    Material SHRINE_CORE_ACTIVATOR_ITEM_TYPE = Material.NETHERITE_INGOT;
+    Material SHRINE_SHARD_ACTIVATOR_ITEM_TYPE = Material.AMETHYST_SHARD;
     String SHRINE_CORE_ITEM_NAME = "Shrine Activator";
     String SHRINE_SHARD_ITEM_NAME = "Shrine Shard Activator";
     String SHIRE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";

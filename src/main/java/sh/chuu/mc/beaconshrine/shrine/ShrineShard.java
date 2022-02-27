@@ -9,11 +9,15 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static sh.chuu.mc.beaconshrine.Vars.SHRINE_CORE_ACTIVATOR_ITEM_TYPE;
 
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
@@ -31,6 +35,11 @@ public class ShrineShard extends AbstractShrine {
         @SuppressWarnings("unchecked")
         List<Integer> loc = (List<Integer>) ss.get("lodestone");
         this.lodestone = new Location(w, loc.get(0), loc.get(1), loc.get(2));
+    }
+
+    @Override
+    public ItemStack activatorItem() {
+        return parent.shardActivatorItem();
     }
 
     /**

@@ -55,7 +55,7 @@ public class ShrineCore extends AbstractShrine {
      */
     public ShrineCore(int id, ShulkerBox shulker, Beacon beacon) {
         super(id, shulker);
-        this.beaconY = beacon == null ? -1 : beacon.getY();
+        this.beaconY = beacon == null ? -0xff : beacon.getY();
         this.firstTradeTime = 0;
         this.scrollMax = 3;
         this.scrollUses = 0;
@@ -83,18 +83,24 @@ public class ShrineCore extends AbstractShrine {
             shards.add(new ShrineShard(id, this, ss));
     }
 
+    @Override
     public ItemStack activatorItem() {
-        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_CORE_ITEM_TYPE, true, name, chatColor, id, x, z);
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_CORE_ACTIVATOR_ITEM_TYPE, true, name, chatColor, id, x, z);
     }
 
     public ItemStack shardActivatorItem() {
-        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_SHARD_ITEM_TYPE, false, name, chatColor, id, x, z);
+        return BeaconShireItemUtils.shrineActivatorItem(SHRINE_SHARD_ACTIVATOR_ITEM_TYPE, false, name, chatColor, id, x, z);
     }
 
     @Override
     public void setShulker(ShulkerBox s, boolean dyed) {
         super.setShulker(s, dyed);
-        this.beaconY = -1;
+        this.beaconY = -0xff;
+    }
+
+    public void setShulker(ShulkerBox s, boolean dyed, Beacon beacon) {
+        super.setShulker(s, dyed);
+        this.beaconY = beacon == null ? -0xff : beacon.getY();
     }
 
     /**
@@ -110,10 +116,10 @@ public class ShrineCore extends AbstractShrine {
     public boolean isValid() {
         Block shulkerBlock = w.getBlockAt(x, y, z);
         BlockState shulkerData = shulkerBlock.getState();
-        if (!(shulkerData instanceof ShulkerBox sb) || this.id != BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_CORE_ITEM_TYPE))
+        if (!(shulkerData instanceof ShulkerBox sb) || this.id != BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_CORE_ACTIVATOR_ITEM_TYPE))
             return false;
 
-        BlockState beaconState = beaconY == -1 ? null : w.getBlockAt(x, beaconY, z).getState();
+        BlockState beaconState = beaconY == -0xff ? null : w.getBlockAt(x, beaconY, z).getState();
         Beacon beacon;
         if (beaconState instanceof Beacon) {
             beacon = (Beacon) beaconState;
@@ -122,7 +128,7 @@ public class ShrineCore extends AbstractShrine {
         } else {
             beacon = BlockUtils.getBeaconBelow(shulkerBlock.getRelative(BlockFace.DOWN, 3), 4);
             if (beacon == null) {
-                beaconY = -1;
+                beaconY = -0xff;
                 return false;
             } else {
                 beaconY = beacon.getY();
@@ -178,7 +184,7 @@ public class ShrineCore extends AbstractShrine {
         warpScroll.addIngredient(new ItemStack(Material.DIAMOND, 2));
 
         MerchantRecipe shrineShard = new MerchantRecipe(shardActivatorItem(), 0, 26, false);
-        shrineShard.addIngredient(new ItemStack(SHRINE_SHARD_ITEM_TYPE, 2));
+        shrineShard.addIngredient(new ItemStack(SHRINE_SHARD_ACTIVATOR_ITEM_TYPE, 2));
         shrineShard.addIngredient(new ItemStack(Material.ENDER_PEARL, 1));
 
         merchant.setRecipes(ImmutableList.of(warpScroll, shrineShard));
@@ -237,19 +243,12 @@ public class ShrineCore extends AbstractShrine {
             BlockState blockState = b.getState();
 
             if (blockState instanceof ShulkerBox sb) {
-                if (id == BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_SHARD_ITEM_TYPE)) {
+                if (id == BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_SHARD_ACTIVATOR_ITEM_TYPE)) {
                     return sb;
                 }
             }
         }
         return null;
-    }
-
-    /**
-     * This assumes that a Shulker box exists as an inventory
-     */
-    public void putShrineItem() {
-        getInventory().addItem(activatorItem());
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -26,7 +27,7 @@ public class GUIEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final ShrineManager manager = plugin.getShrineManager();
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.LOWEST)
     public void guiClick(InventoryClickEvent ev) {
         Player p = (Player) ev.getWhoClicked();
         Inventory inv = ev.getClickedInventory();
@@ -73,7 +74,7 @@ public class GUIEvents implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.LOWEST)
     public void guiDrag(InventoryDragEvent ev) {
         HumanEntity he = ev.getWhoClicked();
         Inventory inv = ev.getView().getTopInventory();
@@ -90,12 +91,12 @@ public class GUIEvents implements Listener {
         for (int slot : ev.getRawSlots()) {
             if (slot < topSize) {
                 ev.setCancelled(true);
-                break;
+                return;
             }
         }
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.LOWEST)
     public void guiClose(InventoryCloseEvent ev) {
         Player p = (Player) ev.getPlayer();
         ShrineManager.GuiView gui = manager.closedShrineGui(p);
@@ -125,11 +126,14 @@ public class GUIEvents implements Listener {
         if (inv.getType() == InventoryType.SHULKER_BOX) {
             BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(inv);
             if (res == null) return;
-            if (res.item().getType() == SHRINE_CORE_ITEM_TYPE) {
-                ShrineCore core = manager.getShrine(res.id());
+            if (res.item().getType() == SHRINE_CORE_ACTIVATOR_ITEM_TYPE) {
+                ShrineCore core = manager.getShrine(res.id()); // Costly operation to put it outside of if/else statement
                 core.setSymbolItemType(inv);
                 core.updateShardList();
-            } else ; // FIXME Implement Shard logic on shulker box close
+            } else if (res.item().getType() == SHRINE_SHARD_ACTIVATOR_ITEM_TYPE) {
+                ShrineCore core = manager.getShrine(res.id());
+                core.updateShardList();
+            }
         }
     }
 }

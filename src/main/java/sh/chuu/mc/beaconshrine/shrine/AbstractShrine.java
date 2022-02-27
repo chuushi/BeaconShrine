@@ -110,6 +110,7 @@ public abstract class AbstractShrine {
 
     public abstract boolean isValid();
     public abstract Inventory getGui(Player p);
+    public abstract ItemStack activatorItem();
 
     public int id() { return id; }
     public World world() { return w; }

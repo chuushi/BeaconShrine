@@ -1,12 +1,12 @@
 package sh.chuu.mc.beaconshrine.listeners;
 
 import net.md_5.bungee.api.ChatMessageType;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.Beacon;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -41,7 +41,7 @@ public class ShrineEvents implements Listener {
             ev.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's
+    @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's // TODO what is this
     public void shrineClick(PlayerInteractEvent ev) { // FIXME Excessive Event Calls
         Player p = ev.getPlayer();
         if (p.isSneaking()
@@ -57,31 +57,46 @@ public class ShrineEvents implements Listener {
             if (item.getType() == Material.COMPASS && ev.getClickedBlock().getType() == Material.LODESTONE)
                 return;
 
-            // New shrine detection - take away ingot
             if (ev.useItemInHand() == Event.Result.DENY) return;
-            if (item.getType() == SHRINE_CORE_ITEM_TYPE) { // TODO  || item.getType() == SHRINE_SHARD_ITEM_TYPE
+
+            // New shrine detection - take away ingot
+            boolean isCoreItem = item.getType() == SHRINE_CORE_ACTIVATOR_ITEM_TYPE;
+            if (isCoreItem || item.getType() == SHRINE_SHARD_ACTIVATOR_ITEM_TYPE) {
                 ClickedShulker cs = getValidShulkerNear(ev.getClickedBlock(), 4, false);
-                ShulkerBox shulker = cs.shulker; // FIXME Review what changes!!!
-                if (shulker != null) {
-                    Inventory inv = shulker.getInventory();
-                    int shrineId = BeaconShireItemUtils.getShrineId(inv, SHRINE_CORE_ITEM_TYPE);
-                    if (shrineId == -1) {
+                if (cs != null) {
+                    Inventory inv = cs.shulker.getInventory();
+                    BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(inv);
+
+                    if (res == null) {
                         // new shulker box
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
-                        ShrineCore shrine;
                         int id = shrineActivatorId(item);
-                        if ((shrine = manager.updateShrine(id, shulker)) == null) {
-                            shrine = manager.newShrine(shulker, null);
+                        if (id != -1) {
+                            if (isCoreItem) {
+                                ShrineCore shrineCore;
+                                if ((shrineCore = manager.updateShrine(id, cs.shulker, cs.beacon)) == null) {
+                                    shrineCore = manager.newShrine(cs.shulker, cs.beacon);
+                                }
+                                ev.setCancelled(true);
+                                inv.setItem(empty, shrineCore.activatorItem());
+                                item.setAmount(item.getAmount() - 1);
+                                return;
+                            } else {
+                                ShrineCore shrineCore = manager.getShrine(id);
+                                // FIXME Add distance from Core check
+                                ev.setCancelled(true);
+                                inv.setItem(empty, shrineCore.shardActivatorItem());
+                                item.setAmount(item.getAmount() - 1);
+                                shrineCore.updateShardList();
+                                return;
+                            }
                         }
-                        ev.setCancelled(true);
-                        item.setAmount(item.getAmount() - 1);
-                        shrine.putShrineItem();
-                        return;
                     } else {
-                        openGUI(p, shrineId, cs);
+                        openGUI(p, res.id(), cs);
                         ev.setCancelled(true);
+                        return;
                     }
                 }
             }
@@ -92,18 +107,17 @@ public class ShrineEvents implements Listener {
 
         if (cs == null) return;
 
-        int id = BeaconShireItemUtils.getShrineId(cs.shulker.getInventory(), cs.isCore ? SHRINE_CORE_ITEM_TYPE : SHRINE_SHARD_ITEM_TYPE);
+        int id = BeaconShireItemUtils.getShrineId(cs.shulker.getInventory(), cs.beacon == null ? SHRINE_SHARD_ACTIVATOR_ITEM_TYPE : SHRINE_CORE_ACTIVATOR_ITEM_TYPE);
         if (id != -1) {
             openGUI(p, id, cs);
-            p.swingMainHand();
-
             ev.setCancelled(true);
         }
     }
 
     private void openGUI(Player p, int id, ClickedShulker sh) {
+        p.swingMainHand();
         // FIXME Implement differentiation between Shrine Core and Shrine Shard
-        if (!manager.openShrineGui(p, id, sh.shulker, sh.isCore))
+        if (!manager.openShrineGui(p, id, sh.shulker, sh.beacon != null))
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
     }
 
@@ -113,13 +127,21 @@ public class ShrineEvents implements Listener {
         if (d instanceof ShulkerBox sb) {
             BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(sb.getInventory());
             if (res != null) {
-                if (res.item().getType() == SHRINE_CORE_ITEM_TYPE)
-                    manager.updateShrine(res.id(), sb);
-                else ;// FIXME Implement shulker place with Shrine Shard item inside?
+                if (res.item().getType() == SHRINE_CORE_ACTIVATOR_ITEM_TYPE)
+                    manager.updateShrine(res.id(), sb, null);
+                else if (res.item().getType() == SHRINE_SHARD_ACTIVATOR_ITEM_TYPE)
+                    manager.getShrine(res.id()).updateShardList();
             }
         }
     }
 
+    /**
+     * Gets the valid Shulker box, whether it contains the necessary Shrine Activator item or not
+     * @param center Center block to search from
+     * @param tier Beacon tier to confirm for Core types, if any
+     * @param onlyShard If it should only search for shards
+     * @return Result, or null if no valid shulker box exists
+     */
     private ClickedShulker getValidShulkerNear(Block center, int tier, boolean onlyShard) {
         ClickedShulker ret = null;
 
@@ -138,16 +160,17 @@ public class ShrineEvents implements Listener {
                     continue;
                 }
                 BlockState state = ptr.getState();
-                if (state instanceof ShulkerBox sb && sb.getCustomName() != null) { // TODO Do we want to move in shrine ID item detection logic here?
+                if (state instanceof ShulkerBox sb && sb.getCustomName() != null) {
                     // prevent counting in when there's more than two shulker boxes on the beacon beam(s)
                     if (ret != null) {
                         return null;
                     }
                     if (isLodestoneBefore) {
-                        ret = new ClickedShulker(sb, false);
+                        ret = new ClickedShulker(sb, null);
                     }
-                    if (BlockUtils.getBeaconBelow(ptr, tier) != null) {
-                        ret = new ClickedShulker(sb, true);
+                    Beacon beacon = BlockUtils.getBeaconBelow(ptr, tier);
+                    if (!onlyShard && beacon != null) {
+                        ret = new ClickedShulker(sb, beacon);
                     }
                 }
                 isLodestoneBefore = false;
@@ -158,20 +181,21 @@ public class ShrineEvents implements Listener {
 
         for (Block b : BlockUtils.getSurroundingStage2(center, ShrineCore.RADIUS)) {
             BlockState state = b.getState();
+            Beacon beacon = BlockUtils.getBeaconBelow(b, tier);
             if (state instanceof ShulkerBox sb
                     && sb.getCustomName() != null
-                    && BlockUtils.getBeaconBelow(b, tier) != null
+                    && beacon != null
             ) {
                 // prevent counting in when there's more than two shulker boxes on the beacon beam(s)
                 if (ret != null) {
                     return null;
                 }
-                ret = new ClickedShulker(sb, true);
+                ret = new ClickedShulker(sb, beacon);
 
             }
         }
         return ret;
     }
 
-    private record ClickedShulker(ShulkerBox shulker, boolean isCore) {}
+    private record ClickedShulker(ShulkerBox shulker, Beacon beacon) {}
 }

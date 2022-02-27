@@ -291,14 +291,13 @@ public class ShrineManager {
             getShrine(id).warp(p, guiShrine);
     }
 
-    public ShrineCore updateShrine(int id, ShulkerBox s) {
-        if (id == -1 || s.getCustomName() == null)
+    public ShrineCore updateShrine(int id, ShulkerBox s, Beacon beacon) {
+        if (s.getCustomName() == null)
             return null;
+
         ShrineCore shrine = cores.get(id);
         if (shrine == null) return null;
-        shrine.setShulker(s, s.getType() != Material.SHULKER_BOX);
-
-
+        shrine.setShulker(s, s.getType() != Material.SHULKER_BOX, beacon);
 
         return shrine;
     }
