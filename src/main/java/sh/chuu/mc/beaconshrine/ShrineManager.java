@@ -192,8 +192,18 @@ public class ShrineManager {
         warping.remove(p);
     }
 
-    Inventory getWarpGui(Player p, AbstractShrine shrine) {
-        List<Integer> wids = plugin.getCloudManager().getTunedShrineList(p);
+    /**
+     *
+     * @param p Player actioning the GUI
+     * @param shrine This current shrine
+     * @param isCore If shrine is core (effectively shrine instanceof ShrineCore)
+     * @return Inventory of warp GUI
+     */
+    private Inventory getWarpGui(Player p, AbstractShrine shrine, boolean isCore) {
+        //if (isCore)
+        List<?> wids = isCore ? plugin.getCloudManager().getTunedShrineList(p) : shrine.getShards();
+        // TODO Tuned Shrines only
+
         int slots = (wids.size()/9 + 1) * 9;
         if (slots > 54) {
             // TODO pagination
@@ -203,12 +213,24 @@ public class ShrineManager {
         Inventory ret = Bukkit.createInventory(null, slots, "Warp to...");
 
         int last = Math.min(wids.size(), slots);
-        for (int i = 0; i < last; i++) {
-            int id = wids.get(i);
+        if (isCore) {
+            for (int i = 0; i < last; i++) {
+                int id = (Integer) wids.get(i);
 
-            ShrineCore sm = cores.get(id);
-            ItemStack item = sm.createWarpScrollGuiItem(id == shrine.id());
-            ret.setItem(i, item);
+                ShrineCore sm = cores.get(id);
+                ItemStack item = sm.createWarpScrollGuiItem(id == shrine.id());
+                ret.setItem(i, item);
+            }
+        } else {
+            ShrineCore sc = shrine instanceof ShrineShard ss ? ss.parent() : (ShrineCore) shrine;
+            ItemStack itemCore = sc.createWarpScrollGuiItem(shrine instanceof ShrineCore);
+            ret.setItem(0, itemCore);
+            for (int i = 1; i < last; i++) {
+                ShrineShard ss = (ShrineShard) wids.get(i-1);
+
+                ItemStack item = ss.createWarpScrollGuiItem(ss == shrine);
+                ret.setItem(i, item);
+            }
         }
         return ret;
     }
@@ -243,7 +265,17 @@ public class ShrineManager {
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
-                p.openInventory(getWarpGui(p, shrine)); // TODO Not valid case for Shrine Shards
+                p.openInventory(getWarpGui(p, shrine, true));
+            }, 1L);
+            return;
+        }
+
+        if (type == SHARD_LIST_ITEM_TYPE) {
+            p.closeInventory();
+            ShrineGUI.clickNoise(p);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
+                p.openInventory(getWarpGui(p, shrine, false));
             }, 1L);
             return;
         }

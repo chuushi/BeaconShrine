@@ -1,6 +1,7 @@
 package sh.chuu.mc.beaconshrine.listeners;
 
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -41,7 +42,7 @@ public class ShrineEvents implements Listener {
             ev.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's // TODO what is this
+    @EventHandler(priority = EventPriority.NORMAL) // Keep this lower than LoreItemClickEvents's // TODO what is this comment
     public void shrineClick(PlayerInteractEvent ev) { // FIXME Excessive Event Calls
         Player p = ev.getPlayer();
         if (p.isSneaking()
@@ -72,11 +73,11 @@ public class ShrineEvents implements Listener {
                         int empty = inv.firstEmpty();
                         if (empty == -1) return;
 
-                        int id = shrineActivatorId(item);
-                        if (id != -1) {
+                        int itemID = shrineActivatorId(item);
+                        if (itemID != -1) {
                             if (isCoreItem) {
                                 ShrineCore shrineCore;
-                                if ((shrineCore = manager.updateShrine(id, cs.shulker, cs.beacon)) == null) {
+                                if ((shrineCore = manager.updateShrine(itemID, cs.shulker, cs.beacon)) == null) {
                                     shrineCore = manager.newShrine(cs.shulker, cs.beacon);
                                 }
                                 ev.setCancelled(true);
@@ -84,8 +85,13 @@ public class ShrineEvents implements Listener {
                                 item.setAmount(item.getAmount() - 1);
                                 return;
                             } else {
-                                ShrineCore shrineCore = manager.getShrine(id);
-                                // FIXME Add distance from Core check
+                                ShrineCore shrineCore = manager.getShrine(itemID);
+                                // TODO make distance configurable
+                                if (shrineCore.distanceSquaredXZ(cs.shulker.getX(), cs.shulker.getZ()) > 562500) {// 750^2
+                                    // TODO move to Vars
+                                    ev.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
+                                    return;
+                                }
                                 ev.setCancelled(true);
                                 inv.setItem(empty, shrineCore.shardActivatorItem());
                                 item.setAmount(item.getAmount() - 1);
@@ -115,7 +121,6 @@ public class ShrineEvents implements Listener {
 
     private void openGUI(Player p, int id, ClickedShulker sh) {
         p.swingMainHand();
-        // FIXME Implement differentiation between Shrine Core and Shrine Shard
         if (!manager.openShrineGui(p, id, sh.shulker, sh.beacon != null))
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
     }

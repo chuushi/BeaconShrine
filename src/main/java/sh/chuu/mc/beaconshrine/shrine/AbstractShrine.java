@@ -9,8 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.configuration.ConfigurationSection;
@@ -18,7 +16,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
@@ -111,6 +108,8 @@ public abstract class AbstractShrine {
     public abstract boolean isValid();
     public abstract Inventory getGui(Player p); // TODO Change unclear naming - this does NOT get a GUI. It opens a GUI to a player.
     public abstract ItemStack activatorItem();
+    public abstract ItemStack createWarpScrollGuiItem(boolean urHere);
+    public abstract List<ShrineShard> getShards();
 
     public int id() { return id; }
     public World world() { return w; }
@@ -150,6 +149,14 @@ public abstract class AbstractShrine {
      * @param step
      */
     protected abstract void theParticles(int step);
+
+    /**
+     * Initial Warp Teleportation Sequence
+     * @param p Player warping
+     * @param from The origin shrine of teleportation
+     * @return Init record of just xyz coords
+     */
+    protected abstract WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from);
 
     /**
      * Warp Teleportation Sequence
@@ -193,55 +200,29 @@ public abstract class AbstractShrine {
         return x*x + z*z;
     }
 
-    // FIXME make this detect and work with ShrineShard as well. This code is only for teleportation to "ShrineCore".
+    // FIXME make this detect and work with ShrineShard as well. This code is only for teleportation between "ShrineCore".
     public CompletableFuture<Boolean> warp(Player p, AbstractShrine from) {
         if (manager.warpContains(p)) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_WARPING);
             return CompletableFuture.completedFuture(false);
-        } else if (!isValid()) {
+        }
+        if (!isValid()) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE);
             return CompletableFuture.completedFuture(false);
-        } else {
-            final double newY;
-            if (w != p.getWorld()) {
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
-                return CompletableFuture.completedFuture(false);
-            }
-            if (w.getEnvironment() == World.Environment.NETHER) {
-                Block b = w.getBlockAt(x, y + 2, z);
-                int air = 8;
-                while (b.getY() < 124 && air != 0) {
-                    if (b.isPassable()) air--;
-                    else air = Math.max(air, 3);
-                    b = b.getRelative(BlockFace.UP);
-                }
-                if (b.getY() == 124) {
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
-                    return CompletableFuture.completedFuture(false);
-                }
-                newY = b.getY();
-            } else {
-                newY = w.getHighestBlockYAt(x, z) + 30;
-            }
-
-            Location loc = p.getLocation();
-            Vector vector;
-            Vector up = new Vector(0, 255 - loc.getY(), 0);
-            if (from != null) {
-                vector = ParticleUtils.getDiff(from.x, from.y, from.z, loc);
-                ParticleUtils.shrineIgnitionSound(p);
-                ParticleUtils.beam(from.getShulkerLocation(true), up, dustColor());
-                ParticleUtils.beam(loc, vector, dustColor());
-            } else {
-                ParticleUtils.beam(loc, up, dustColor());
-                ParticleUtils.paperIgnitionSound(p);
-            }
-
-            CompletableFuture<Boolean> ret = new CompletableFuture<>();
-            manager.warpAdd(p);
-            new WarpSequence(p, newY, ret).runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
-            return ret;
         }
+        if (w != p.getWorld()) {
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
+            return CompletableFuture.completedFuture(false);
+        }
+
+        WarpSequenceInit warpSequenceInit = warpSequenceInit(p, from);
+        if (warpSequenceInit == null)
+            return CompletableFuture.completedFuture(false);
+
+        CompletableFuture<Boolean> ret = new CompletableFuture<>();
+        manager.warpAdd(p);
+        new WarpSequence(p, warpSequenceInit, ret).runTaskTimer(BeaconShrine.getInstance(), 0L, 1L);
+        return ret;
     }
 
     /**
@@ -276,8 +257,10 @@ public abstract class AbstractShrine {
         }
     }
 
+    protected record WarpSequenceInit(int step, double newX, double newY, double newZ, boolean isShard) {}
+
     protected class WarpSequence extends BukkitRunnable {
-        protected int i = 100;
+        protected int i;
         private final Player p;
         protected final double initX;
         protected final double initY;
@@ -285,18 +268,23 @@ public abstract class AbstractShrine {
         protected final Color color = color();
         private final CompletableFuture<Boolean> result;
 
-        protected final double newX = x + 0.5d;
+        protected final boolean isShard;
+        protected final double newX;
         protected final double newY;
-        protected final double newZ = z + 0.5d;
+        protected final double newZ;
 
-        private WarpSequence(Player player, double newY, CompletableFuture<Boolean> result) {
+        private WarpSequence(Player player, WarpSequenceInit init, CompletableFuture<Boolean> result) {
             super();
+            this.i = init.step;
+            this.newX = init.newX;
+            this.newY = init.newY;
+            this.newZ = init.newZ;
+            this.isShard = init.isShard;
             Location pLoc = player.getLocation();
             this.p = player;
             this.initX = pLoc.getX();
             this.initY = pLoc.getY();
             this.initZ = pLoc.getZ();
-            this.newY = newY;
             this.result = result;
         }
 

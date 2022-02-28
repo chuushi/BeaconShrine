@@ -10,23 +10,22 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static sh.chuu.mc.beaconshrine.Vars.SHRINE_CORE_ACTIVATOR_ITEM_TYPE;
-
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
     private Location lodestone; // TODO Replace with relative block face of Lodestone instead
+    private BlockFace lodestoneFace;
 
-    ShrineShard(int id, ShrineCore parent, ShulkerBox shulker, Location lodestone) {
+    public ShrineShard(int id, ShrineCore parent, ShulkerBox shulker, Location lodestone, BlockFace lodestoneFace) {
         super(id, shulker);
         this.parent = parent;
         this.lodestone = lodestone;
+        this.lodestoneFace = lodestoneFace;
     }
 
     public ShrineShard(int id, ShrineCore parent, Map<?, ?> ss) {
@@ -35,6 +34,8 @@ public class ShrineShard extends AbstractShrine {
         @SuppressWarnings("unchecked")
         List<Integer> loc = (List<Integer>) ss.get("lodestone");
         this.lodestone = new Location(w, loc.get(0), loc.get(1), loc.get(2));
+        String lf = (String) ss.get("lodestoneF");
+        this.lodestoneFace = lf == null ? null : BlockFace.valueOf(lf);
     }
 
     @Override
@@ -60,17 +61,19 @@ public class ShrineShard extends AbstractShrine {
                 && getLodestone() != null;
     }
 
-    public Block getLodestone() {
+    public record LodestoneBlock(Block block, BlockFace face) {}
+    public LodestoneBlock getLodestone() {
         Block lode = lodestone.getBlock();
-        if (lode.getType() == Material.LODESTONE)
-            return lode;
+        if (lode.getType() == Material.LODESTONE && lodestoneFace != null)
+            return new LodestoneBlock(lode, lodestoneFace);
 
         Block shulker = w.getBlockAt(x, y, z);
         for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
             Block b = shulker.getRelative(face);
             if (b.getType() == Material.LODESTONE) {
                 this.lodestone = b.getLocation();
-                return b;
+                this.lodestoneFace = face;
+                return new LodestoneBlock(b, face);
             }
         }
         return null;
@@ -97,8 +100,38 @@ public class ShrineShard extends AbstractShrine {
     }
 
     @Override
+    public ItemStack createWarpScrollGuiItem(boolean urHere) {
+        return ShrineGUI.createShardWarpGui(id, name, symbolItemType, chatColor, urHere);
+    }
+
+    @Override
+    protected WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from) {
+        LodestoneBlock ls = getLodestone();
+        if (ls == null)
+            return null;
+
+        Block tpSpot = null;
+        for (int i = 0; i < ShrineCore.RADIUS; i++) {
+            if (ls.block.isPassable() && ls.block.getRelative(BlockFace.UP).isPassable()) {
+                tpSpot = ls.block;
+                break;
+            }
+        }
+        if (tpSpot == null)
+            return null;
+
+        return new WarpSequenceInit(100, tpSpot.getX() + 0.5, tpSpot.getY(), tpSpot.getZ() + 0.5, true);
+    }
+
+    @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
+        // FIXME Complete soon!
         return step == 0;
+    }
+
+    @Override
+    public List<ShrineShard> getShards() {
+        return parent.getShards();
     }
 
     public ShrineCore parent() {
@@ -109,6 +142,7 @@ public class ShrineShard extends AbstractShrine {
     public HashMap<String, Object> save() {
         HashMap<String, Object> ret = super.save();
         ret.put("lodestone", new int[]{lodestone.getBlockX(), lodestone.getBlockY(), lodestone.getBlockZ()});
+        ret.put("lodestoneF", lodestoneFace.name());
         return ret;
     }
 }

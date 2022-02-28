@@ -1,6 +1,7 @@
 package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
+import net.md_5.bungee.api.ChatMessageType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -23,6 +24,7 @@ import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
@@ -207,8 +209,9 @@ public class ShrineCore extends AbstractShrine {
         return BeaconShireItemUtils.createWarpScroll(id, name, chatColor, p);
     }
 
+    @Override
     public ItemStack createWarpScrollGuiItem(boolean urHere) {
-        return ShrineGUI.createWarpGui(id, name, symbolItemType, chatColor, urHere);
+        return ShrineGUI.createCoreWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
     public boolean containsShard(ShrineShard shard) {
@@ -226,17 +229,18 @@ public class ShrineCore extends AbstractShrine {
             Location lodestone = cm.getLodestone();
             if (lodestone == null) continue;
 
-            ShulkerBox sb = getShulkerAttachedToLodestone(lodestone);
-            if (sb != null) shards.add(new ShrineShard(id, this, sb, lodestone));
+            ShardShulkerFromLodestone sbfl = getShulkerAttachedToLodestone(lodestone);
+            if (sbfl != null) shards.add(new ShrineShard(id, this, sbfl.shulker, lodestone, sbfl.face.getOppositeFace()));
         }
     }
 
+    public record ShardShulkerFromLodestone(ShulkerBox shulker, BlockFace face) {}
     /**
      * Find valid Shulker Box of this Shrine attached to lodestone
      * @param location Location of Lodestone
-     * @return the ShulkerBox instance if valid, else null
+     * @return the ShulkerBox and Face record instance if valid, else null
      */
-    public ShulkerBox getShulkerAttachedToLodestone(Location location) {
+    public ShardShulkerFromLodestone getShulkerAttachedToLodestone(Location location) {
         Block block = location.getBlock();
         for (BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.EAST, BlockFace.NORTH, BlockFace.WEST}) {
             Block b = block.getRelative(face);
@@ -244,7 +248,7 @@ public class ShrineCore extends AbstractShrine {
 
             if (blockState instanceof ShulkerBox sb) {
                 if (id == BeaconShireItemUtils.getShrineId(sb.getInventory(), SHRINE_SHARD_ACTIVATOR_ITEM_TYPE)) {
-                    return sb;
+                    return new ShardShulkerFromLodestone(sb, face);
                 }
             }
         }
@@ -252,7 +256,46 @@ public class ShrineCore extends AbstractShrine {
     }
 
     @Override
+    protected WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from) {
+        if (from instanceof ShrineShard) return warpSequenceFromShrineInit(p, from);
+
+        final double newY;
+        if (w.getEnvironment() == World.Environment.NETHER) {
+            Block b = w.getBlockAt(x, y + 2, z);
+            int air = 8;
+            while (b.getY() < 124 && air != 0) {
+                if (b.isPassable()) air--;
+                else air = Math.max(air, 3);
+                b = b.getRelative(BlockFace.UP);
+            }
+            if (b.getY() == 124) {
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, NO_CLEARANCE);
+                return null;
+            }
+            newY = b.getY();
+        } else {
+            newY = w.getHighestBlockYAt(x, z) + 30;
+        }
+
+        Location loc = p.getLocation();
+        Vector vector;
+        Vector up = new Vector(0, 384 - loc.getY(), 0);
+        if (from != null) {
+            vector = ParticleUtils.getDiff(from.x, from.y, from.z, loc);
+            ParticleUtils.shrineIgnitionSound(p);
+            ParticleUtils.beam(from.getShulkerLocation(true), up, dustColor());
+            ParticleUtils.beam(loc, vector, dustColor());
+        } else {
+            ParticleUtils.beam(loc, up, dustColor());
+            ParticleUtils.paperIgnitionSound(p);
+        }
+        return new WarpSequenceInit(100, x + 0.5, newY, z + 0.5, false);
+    }
+
+    @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
+        if (ws.isShard) return warpSequenceFromShrine(step, ws, p);
+
         Location loc = p.getLocation();
 
         if (step > 30) {
@@ -279,12 +322,36 @@ public class ShrineCore extends AbstractShrine {
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
         } else if (step == -1) {
             ParticleUtils.warpBoom(loc, ws.color);
-        } else if (step == -100) {
-            return true;
-        }
+        } else return step == -100;
         return false;
     }
 
+    protected WarpSequenceInit warpSequenceFromShrineInit(Player p, AbstractShrine from) {
+        // TODO Set destination as somewhere below or above the Shrine
+//        ShrineShard.LodestoneBlock ls = getLodestone();
+//        if (ls == null)
+//            return null;
+//
+//        Block tpSpot = null;
+//        for (int i = 0; i < ShrineCore.RADIUS; i++) {
+//            if (ls.block.isPassable() && ls.block.getRelative(BlockFace.UP).isPassable()) {
+//                tpSpot = ls.block;
+//                break;
+//            }
+//        }
+//        if (tpSpot == null)
+//            return null;
+
+//        return new WarpSequenceInit(100, tpSpot.getX() + 0.5, tpSpot.getY(), tpSpot.getZ() + 0.5, true);
+        return null;
+    }
+
+    protected boolean warpSequenceFromShrine(int step, WarpSequence ws, Player p) {
+        // FIXME Complete soon!
+        return step == 0;
+    }
+
+    @Override
     public List<ShrineShard> getShards() {
         return shards;
     }

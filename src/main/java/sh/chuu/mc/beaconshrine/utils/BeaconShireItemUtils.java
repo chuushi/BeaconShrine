@@ -85,7 +85,7 @@ public interface BeaconShireItemUtils {
         im.setDisplayName(color + (isCore ? SHRINE_CORE_ITEM_NAME : SHRINE_SHARD_ITEM_NAME));
         im.setLore(ImmutableList.of(
                 color + name,
-                SHIRE_ID_HEADER + id,
+                SHRINE_ID_HEADER + id,
                 ChatColor.DARK_GRAY + (isCore ? "at " : "Core at ") + x + ", " + z
         ));
         im.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -101,7 +101,7 @@ public interface BeaconShireItemUtils {
         List<String> lore = meta.getLore();
         if (lore == null || lore.size() < 3) return -1;
         try {
-            return Integer.parseInt(lore.get(1).substring(SHIRE_ID_HEADER.length()));
+            return Integer.parseInt(lore.get(1).substring(SHRINE_ID_HEADER.length()));
         } catch (NumberFormatException | IndexOutOfBoundsException ex) {
             return -1;
         }

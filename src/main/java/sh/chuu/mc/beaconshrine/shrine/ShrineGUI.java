@@ -16,12 +16,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.utils.BlockUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static sh.chuu.mc.beaconshrine.Vars.*;
-import static sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils.shrineActivatorId;
 
 public class ShrineGUI {
     public static final ItemStack CLOUD_CHEST_ITEM;
@@ -79,16 +76,33 @@ public class ShrineGUI {
         return shulker;
     }
 
-    public static ItemStack createWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
+    public static ItemStack createCoreWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
         ItemStack ret = new ItemStack(symbol == null ? WARP_LIST_ITEM_TYPE : symbol);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
         //noinspection ConstantConditions meta always exists
         im.setDisplayName(ChatColor.YELLOW + "Warp to: " + color + name);
         if (urHere) {
-            im.setLore(ImmutableList.of(SHIRE_YOU_ARE_HERE));
+            im.setLore(ImmutableList.of(SHRINE_YOU_ARE_HERE));
         } else {
-            im.setLore(ImmutableList.of(SHIRE_ID_HEADER + id));
+            im.setLore(ImmutableList.of(SHRINE_ID_HEADER + id));
+            im.addEnchant(Enchantment.DURABILITY, 1, true);
+        }
+        im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_ATTRIBUTES);
+        ret.setItemMeta(im);
+        return ret;
+    }
+
+    public static ItemStack createShardWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
+        ItemStack ret = new ItemStack(symbol == null ? SHARD_LIST_ITEM_TYPE : symbol);
+        ItemMeta im = ret.getItemMeta();
+        String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
+        //noinspection ConstantConditions meta always exists
+        im.setDisplayName(ChatColor.LIGHT_PURPLE + "Warp to: " + color + name);
+        if (urHere) {
+            im.setLore(ImmutableList.of(SHRINE_YOU_ARE_HERE));
+        } else {
+            im.setLore(ImmutableList.of(SHARD_INDEX_HEADER + id));
             im.addEnchant(Enchantment.DURABILITY, 1, true);
         }
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_ATTRIBUTES);
@@ -103,7 +117,7 @@ public class ShrineGUI {
             if (l.size() == 0) return false;
             try {
                 String line1 = l.get(0);
-                return line1.equals(SHIRE_YOU_ARE_HERE) || line1.startsWith(SHIRE_ID_HEADER);
+                return line1.equals(SHRINE_YOU_ARE_HERE) || line1.startsWith(SHRINE_ID_HEADER);
             } catch (NumberFormatException ex) {
                 return false;
             }
@@ -118,7 +132,7 @@ public class ShrineGUI {
             List<String> l = im.getLore();
             if (l.size() == 0) return -1;
             try {
-                return Integer.parseInt(l.get(0).substring(SHIRE_ID_HEADER.length()));
+                return Integer.parseInt(l.get(0).substring(SHRINE_ID_HEADER.length()));
             } catch (NumberFormatException ex) {
                 return -1;
             }
