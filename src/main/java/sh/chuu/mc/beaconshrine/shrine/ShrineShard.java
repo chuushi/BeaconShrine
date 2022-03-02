@@ -3,6 +3,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
@@ -10,19 +11,26 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static sh.chuu.mc.beaconshrine.Vars.*;
+
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
+    private int index;
     private Location lodestone; // TODO Replace with relative block face of Lodestone instead
     private BlockFace lodestoneFace;
 
-    public ShrineShard(int id, ShrineCore parent, ShulkerBox shulker, Location lodestone, BlockFace lodestoneFace) {
+    public ShrineShard(int id, int index, ShrineCore parent, ShulkerBox shulker, Location lodestone, BlockFace lodestoneFace) {
         super(id, shulker);
+        this.index = index;
         this.parent = parent;
         this.lodestone = lodestone;
         this.lodestoneFace = lodestoneFace;
@@ -56,6 +64,7 @@ public class ShrineShard extends AbstractShrine {
         Block shulker = w.getBlockAt(x, y, z);
         return shulker.getState() instanceof ShulkerBox s
                 && s.getCustomName() != null
+                && this.id == BeaconShireItemUtils.getShrineId(s.getInventory(), SHRINE_SHARD_ACTIVATOR_ITEM_TYPE)
                 && parent.isValid()
                 && parent.containsShard(this)
                 && getLodestone() != null;
@@ -101,7 +110,7 @@ public class ShrineShard extends AbstractShrine {
 
     @Override
     public ItemStack createWarpScrollGuiItem(boolean urHere) {
-        return ShrineGUI.createShardWarpGui(id, name, symbolItemType, chatColor, urHere);
+        return ShrineGUI.createShardWarpGui(index, name, symbolItemType, chatColor, urHere);
     }
 
     @Override
@@ -111,10 +120,20 @@ public class ShrineShard extends AbstractShrine {
             return null;
 
         Block tpSpot = null;
-        for (int i = 0; i < ShrineCore.RADIUS; i++) {
-            if (ls.block.isPassable() && ls.block.getRelative(BlockFace.UP).isPassable()) {
-                tpSpot = ls.block;
-                break;
+        Block ptr = ls.block;
+        int r = ShrineCore.RADIUS + 2;
+        for (int i = 0; i < r; i++) {
+            ptr = ptr.getRelative(ls.face);
+            if (ptr.isPassable()) {
+                if (ptr.getRelative(BlockFace.UP).isPassable()) {
+                    tpSpot = ptr;
+                    break;
+                }
+                Block down = ptr.getRelative(BlockFace.DOWN);
+                if (down.isPassable()) {
+                    tpSpot = down;
+                    break;
+                }
             }
         }
         if (tpSpot == null)
@@ -126,7 +145,18 @@ public class ShrineShard extends AbstractShrine {
     @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
         // FIXME Complete soon!
-        return step == 0;
+        if (step == 0) {
+            Location to = p.getLocation();
+            to.setX(ws.newX);
+            to.setY(ws.newY);
+            to.setZ(ws.newZ);
+
+            ParticleUtils.warpBoom(p.getLocation(), ws.color);
+            p.teleport(to);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -75,13 +75,6 @@ public class ShrineEvents implements Listener {
 
                         int itemID = shrineActivatorId(item);
 
-                        /*
-                        3 scenarios:
-                        raw netherite: coreitem, id == -1
-                        ID'd netherite: coreitem, id != -1
-                        ID'd shard: not coreitem, id != -1
-                         */
-
                         final ItemStack itemToSet;
                         final ShrineCore shrineCore;
                         if (itemID != -1) {
@@ -108,6 +101,7 @@ public class ShrineEvents implements Listener {
                         ev.setCancelled(true);
                         inv.setItem(empty, itemToSet);
                         item.setAmount(item.getAmount() - 1);
+                        // TODO move to Vars
                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Inserted activation item"));
                         // TODO pop noise
                         if (!isCoreItem) shrineCore.updateShardList();

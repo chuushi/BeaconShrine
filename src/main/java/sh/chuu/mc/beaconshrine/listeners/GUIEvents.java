@@ -18,6 +18,7 @@ import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
+import sh.chuu.mc.beaconshrine.shrine.ShrineShard;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 
 import java.util.List;
@@ -51,24 +52,45 @@ public class GUIEvents implements Listener {
         ItemStack item = ev.getCurrentItem();
         boolean isTopInv = inv == ev.getView().getTopInventory();
 
-        if (viewType == ShrineManager.GuiType.CORE_WARP_LIST || viewType == ShrineManager.GuiType.SHARD_WARP_LIST) {
+        boolean coreWarpList = viewType == ShrineManager.GuiType.CORE_WARP_LIST;
+        if (coreWarpList || viewType == ShrineManager.GuiType.SHARD_WARP_LIST) {
             if (ev.isLeftClick() && isTopInv) {
                 ev.setCancelled(true);
-                // FIXME implement warp for shards
-                int clickId = ShrineGUI.getWarpIdGui(item);
-                if (clickId != -1) {
-                    manager.clickedWarpGui(p, clickId, gui.shrine());
+                int clickId;
+                if (coreWarpList) {
+                    clickId = ShrineGUI.getWarpIdGui(item, true);
+                    if (clickId != -1) {
+                        manager.clickedWarpGui(p, manager.getShrine(clickId), gui.shrine());
+                    }
+                } else {
+                    clickId = ShrineGUI.getWarpIdGui(item, false);
+                    int id = gui.shrine().id();
+                    ShrineCore shrine = manager.getShrine(id);
+                    List<ShrineShard> shards = shrine.getShards();
+                    if (clickId == -1) {
+                        int coreCheck = ShrineGUI.getWarpIdGui(item, true);
+                        if (coreCheck != -1) {
+                            manager.clickedWarpGui(p, shrine, gui.shrine());
+                        }
+                    } else {
+                        manager.clickedWarpGui(p, shards.get(clickId), gui.shrine());
+                    }
                 }
                 return;
             }
 
             ItemStack cursor = ev.getView().getCursor();
             if (cursor != null && cursor.getType() == Material.AIR) cursor = null;
-            if (cursor != null) {
-                boolean isWarpOnCursor = ShrineGUI.isWarpGui(cursor);
-                if (isTopInv ^ isWarpOnCursor) {
-                    ev.setCancelled(true);
+            if (coreWarpList) {
+                if (cursor != null) {
+                    boolean isWarpOnCursor = ShrineGUI.isWarpGui(cursor);
+                    if (isTopInv ^ isWarpOnCursor) {
+                        ev.setCancelled(true);
+                    }
                 }
+            } else {
+                if (isTopInv)
+                    ev.setCancelled(true);
             }
             return;
         }

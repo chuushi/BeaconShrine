@@ -32,29 +32,29 @@ public class ShrineGUI {
         CLOUD_CHEST_ITEM = createGuiItem("Open Personal Cloud Chest",
                 CLOUD_CHEST_ITEM_TYPE,
                 ImmutableList.of(ChatColor.GRAY + "Access this chest from every Shrine!"),
-                true);
+                true, null);
 
-        SHOP_ITEM = createGuiItem("Open Scroll Shop", SHOP_ITEM_TYPE, null, true);
+        SHOP_ITEM = createGuiItem("Open Scroll Shop", SHOP_ITEM_TYPE, null, true, null);
 
-        ENDER_CHEST_ITEM = createGuiItem("Open Ender Chest", ENDER_CHEST_ITEM_TYPE, null, false);
+        ENDER_CHEST_ITEM = createGuiItem("Open Ender Chest", ENDER_CHEST_ITEM_TYPE, null, false, null);
 
         WARP_LIST_ITEM = createGuiItem("Warp to another Shrine...",
                 WARP_LIST_ITEM_TYPE,
                 ImmutableList.of(ChatColor.GRAY + "Warp to any tuned shrines"),
-                true);
+                true, null);
 
         SHARD_LIST_ITEM = createGuiItem("Warp to a Shard...",
                 SHARD_LIST_ITEM_TYPE,
                 ImmutableList.of(ChatColor.GRAY + "Warp to any tuned shards within this shrine cluster"),
-                true);
+                true, ChatColor.LIGHT_PURPLE);
         // TODO change item and meta, and add gui event to this
     }
 
-    private static ItemStack createGuiItem(String name, Material material, List<String> lore, boolean shiny) {
+    private static ItemStack createGuiItem(String name, Material material, List<String> lore, boolean shiny, ChatColor color) {
         ItemStack ret = new ItemStack(material);  // TODO change item and meta, and add gui event to this
         ItemMeta im = ret.getItemMeta();
         //noinspection ConstantConditions Existing item always have ItemMeta
-        im.setDisplayName(ChatColor.YELLOW + name);
+        im.setDisplayName((color == null ? ChatColor.YELLOW : color) + name);
         if (lore != null)
             im.setLore(lore);
         if (shiny)
@@ -93,7 +93,7 @@ public class ShrineGUI {
         return ret;
     }
 
-    public static ItemStack createShardWarpGui(int id, String name, Material symbol, ChatColor cc, boolean urHere) {
+    public static ItemStack createShardWarpGui(int index, String name, Material symbol, ChatColor cc, boolean urHere) {
         ItemStack ret = new ItemStack(symbol == null ? SHARD_LIST_ITEM_TYPE : symbol);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
@@ -102,7 +102,7 @@ public class ShrineGUI {
         if (urHere) {
             im.setLore(ImmutableList.of(SHRINE_YOU_ARE_HERE));
         } else {
-            im.setLore(ImmutableList.of(SHARD_INDEX_HEADER + id));
+            im.setLore(ImmutableList.of(SHARD_INDEX_HEADER + index));
             im.addEnchant(Enchantment.DURABILITY, 1, true);
         }
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_ATTRIBUTES);
@@ -125,15 +125,15 @@ public class ShrineGUI {
         return false;
     }
 
-    public static int getWarpIdGui(ItemStack item) {
+    public static int getWarpIdGui(ItemStack item, boolean isCore) {
         if (item == null) return -1;
         ItemMeta im = item.getItemMeta();
         if (im.hasLore()) {
             List<String> l = im.getLore();
             if (l.size() == 0) return -1;
             try {
-                return Integer.parseInt(l.get(0).substring(SHRINE_ID_HEADER.length()));
-            } catch (NumberFormatException ex) {
+                return Integer.parseInt(l.get(0).substring(isCore ? SHRINE_ID_HEADER.length() : SHARD_INDEX_HEADER.length()));
+            } catch (NumberFormatException | StringIndexOutOfBoundsException ex) {
                 return -1;
             }
         }
@@ -195,7 +195,7 @@ public class ShrineGUI {
         List<Integer> ret = new ArrayList<>();
         for (ItemStack item : inv) {
             if (item == null || item.getType() == Material.AIR) continue;
-            int id = getWarpIdGui(item);
+            int id = getWarpIdGui(item, true);
             if (id == -1) ret.add(currentId);
             else ret.add(id);
         }

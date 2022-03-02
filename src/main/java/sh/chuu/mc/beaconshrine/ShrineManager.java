@@ -106,7 +106,7 @@ public class ShrineManager {
      * @param id ID
      * @param shulker Shulker box
      * @param isCore Whether the Shrine type is Core
-     * @return
+     * @return true if opened, false on failure
      */
     public boolean openShrineGui(Player p, int id, ShulkerBox shulker, boolean isCore) {
 
@@ -214,8 +214,8 @@ public class ShrineManager {
 
         Inventory ret = Bukkit.createInventory(null, slots, "Warp to...");
 
-        int last = Math.min(wids.size(), slots);
         if (isCore) {
+            int last = Math.min(wids.size(), slots);
             for (int i = 0; i < last; i++) {
                 int id = (Integer) wids.get(i);
 
@@ -227,7 +227,9 @@ public class ShrineManager {
             ShrineCore sc = shrine instanceof ShrineShard ss ? ss.parent() : (ShrineCore) shrine;
             ItemStack itemCore = sc.createWarpScrollGuiItem(shrine instanceof ShrineCore);
             ret.setItem(0, itemCore);
-            for (int i = 1; i < last; i++) {
+
+            int last1 = Math.min(wids.size(), slots) + 1;
+            for (int i = 1; i < last1; i++) {
                 ShrineShard ss = (ShrineShard) wids.get(i-1);
 
                 ItemStack item = ss.createWarpScrollGuiItem(ss == shrine);
@@ -306,7 +308,7 @@ public class ShrineManager {
         ItemMeta im = slot.getItemMeta();
         if (im instanceof BlockStateMeta) {
             BlockState bs = ((BlockStateMeta) im).getBlockState();
-            if (bs instanceof ShulkerBox){
+            if (bs instanceof ShulkerBox) {
                 // Shulker box within
                 p.closeInventory();
                 ShrineGUI.clickNoise(p);
@@ -315,16 +317,16 @@ public class ShrineManager {
         }
     }
 
-    public void clickedWarpGui(Player p, int id, AbstractShrine guiShrine) {
+    public void clickedWarpGui(Player p, AbstractShrine destinationShrine, AbstractShrine guiSourceShrine) {
         ShrineGUI.clickNoise(p);
         p.closeInventory();
-        long diff = guiShrine instanceof ShrineCore
-                ? plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis()
-                : 0;
+        long diff = destinationShrine.id() == guiSourceShrine.id()
+                ? 0
+                : plugin.getCloudManager().getNextWarp(p) - System.currentTimeMillis();
         if (diff > 0)
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGUI.warpTimeLeft(diff)));
         else
-            getShrine(id).warp(p, guiShrine);
+            destinationShrine.warp(p, guiSourceShrine);
     }
 
     public void loadShrines() {
@@ -340,7 +342,6 @@ public class ShrineManager {
             }
             ConfigurationSection cs = config.getConfigurationSection(key);
             nextId = Math.max(id + 1, nextId);
-            //noinspection ConstantConditions Never null since it's from an existing key
             cores.put(id, new ShrineCore(id, cs));
         }
     }

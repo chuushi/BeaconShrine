@@ -220,6 +220,7 @@ public class ShrineCore extends AbstractShrine {
 
     public void updateShardList() {
         shards.clear();
+        int i = 0;
         for (ItemStack item : getInventory()) {
             if (item == null || item.getType() != Material.COMPASS) continue;
 
@@ -230,7 +231,9 @@ public class ShrineCore extends AbstractShrine {
             if (lodestone == null) continue;
 
             ShardShulkerFromLodestone sbfl = getShulkerAttachedToLodestone(lodestone);
-            if (sbfl != null) shards.add(new ShrineShard(id, this, sbfl.shulker, lodestone, sbfl.face.getOppositeFace()));
+            if (sbfl != null) shards.add(new ShrineShard(id, i, this, sbfl.shulker, lodestone, sbfl.face.getOppositeFace()));
+
+            i++;
         }
     }
 
@@ -347,8 +350,18 @@ public class ShrineCore extends AbstractShrine {
     }
 
     protected boolean warpSequenceFromShrine(int step, WarpSequence ws, Player p) {
-        // FIXME Complete soon!
-        return step == 0;
+        if (step == 0) {
+            Location to = p.getLocation();
+            to.setX(ws.newX);
+            to.setY(ws.newY);
+            to.setZ(ws.newZ);
+
+            ParticleUtils.warpBoom(p.getLocation(), ws.color);
+            p.teleport(to);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
+            return true;
+        }
+        return false;
     }
 
     @Override
