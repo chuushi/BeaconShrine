@@ -200,7 +200,6 @@ public abstract class AbstractShrine {
         return x*x + z*z;
     }
 
-    // FIXME make this detect and work with ShrineShard as well. This code is only for teleportation between "ShrineCore".
     public CompletableFuture<Boolean> warp(Player p, AbstractShrine from) {
         if (manager.warpContains(p)) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_WARPING);

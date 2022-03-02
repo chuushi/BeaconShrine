@@ -74,36 +74,48 @@ public class ShrineEvents implements Listener {
                         if (empty == -1) return;
 
                         int itemID = shrineActivatorId(item);
+
+                        /*
+                        3 scenarios:
+                        raw netherite: coreitem, id == -1
+                        ID'd netherite: coreitem, id != -1
+                        ID'd shard: not coreitem, id != -1
+                         */
+
+                        final ItemStack itemToSet;
+                        final ShrineCore shrineCore;
                         if (itemID != -1) {
+                            shrineCore = manager.getShrine(itemID);
                             if (isCoreItem) {
-                                ShrineCore shrineCore;
-                                if ((shrineCore = manager.updateShrine(itemID, cs.shulker, cs.beacon)) == null) {
-                                    shrineCore = manager.newShrine(cs.shulker, cs.beacon);
-                                }
-                                ev.setCancelled(true);
-                                inv.setItem(empty, shrineCore.activatorItem());
-                                item.setAmount(item.getAmount() - 1);
-                                return;
+                                shrineCore.updateShulker(cs.shulker, cs.beacon);
+                                itemToSet = shrineCore.activatorItem();
                             } else {
-                                ShrineCore shrineCore = manager.getShrine(itemID);
                                 // TODO make distance configurable
                                 if (shrineCore.distanceSquaredXZ(cs.shulker.getX(), cs.shulker.getZ()) > 562500) {// 750^2
                                     // TODO move to Vars
                                     ev.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
                                     return;
                                 }
-                                ev.setCancelled(true);
-                                inv.setItem(empty, shrineCore.shardActivatorItem());
-                                item.setAmount(item.getAmount() - 1);
-                                shrineCore.updateShardList();
-                                return;
+                                itemToSet = shrineCore.shardActivatorItem();
                             }
+                        } else if (isCoreItem) {
+                            shrineCore = manager.newShrine(cs.shulker, cs.beacon);
+                            itemToSet = shrineCore.activatorItem();
+                        } else {
+                            return;
                         }
+
+                        ev.setCancelled(true);
+                        inv.setItem(empty, itemToSet);
+                        item.setAmount(item.getAmount() - 1);
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Inserted activation item"));
+                        // TODO pop noise
+                        if (!isCoreItem) shrineCore.updateShardList();
                     } else {
                         openGUI(p, res.id(), cs);
                         ev.setCancelled(true);
-                        return;
                     }
+                    return;
                 }
             }
         }
@@ -128,11 +140,11 @@ public class ShrineEvents implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void shireShulkerPlace(BlockPlaceEvent ev) {
         BlockState d = ev.getBlock().getState();
-        if (d instanceof ShulkerBox sb) {
+        if (d instanceof ShulkerBox sb && sb.getCustomName() != null) {
             BeaconShireItemUtils.ShrineIdResult res = BeaconShireItemUtils.getShrineId(sb.getInventory());
             if (res != null) {
                 if (res.item().getType() == SHRINE_CORE_ACTIVATOR_ITEM_TYPE)
-                    manager.updateShrine(res.id(), sb, null);
+                    manager.getShrine(res.id()).updateShulker(sb, null);
                 else if (res.item().getType() == SHRINE_SHARD_ACTIVATOR_ITEM_TYPE)
                     manager.getShrine(res.id()).updateShardList();
             }

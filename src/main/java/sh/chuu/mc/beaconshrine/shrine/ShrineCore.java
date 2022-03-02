@@ -100,8 +100,8 @@ public class ShrineCore extends AbstractShrine {
         this.beaconY = -0xff;
     }
 
-    public void setShulker(ShulkerBox s, boolean dyed, Beacon beacon) {
-        super.setShulker(s, dyed);
+    public void updateShulker(ShulkerBox s, Beacon beacon) {
+        super.setShulker(s, s.getType() != Material.SHULKER_BOX);
         this.beaconY = beacon == null ? -0xff : beacon.getY();
     }
 

@@ -56,8 +56,10 @@ public class ShrineManager {
         HOME_SHARD,
         /** Shrine shop view */
         SHOP,
-        /** Shrine Warp view */
-        WARP_LIST
+        /** Shrine Core Warp view */
+        CORE_WARP_LIST,
+        /** Shrine Shard Warp view */
+        SHARD_WARP_LIST
         // TODO add GUI types + Link it with shrine ID stuffs
     }
 
@@ -264,7 +266,7 @@ public class ShrineManager {
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
+                whichGui.put(p, new GuiView(shrine, GuiType.CORE_WARP_LIST));
                 p.openInventory(getWarpGui(p, shrine, true));
             }, 1L);
             return;
@@ -274,7 +276,7 @@ public class ShrineManager {
             p.closeInventory();
             ShrineGUI.clickNoise(p);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                whichGui.put(p, new GuiView(shrine, GuiType.WARP_LIST));
+                whichGui.put(p, new GuiView(shrine, GuiType.SHARD_WARP_LIST));
                 p.openInventory(getWarpGui(p, shrine, false));
             }, 1L);
             return;
@@ -323,17 +325,6 @@ public class ShrineManager {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ShrineGUI.warpTimeLeft(diff)));
         else
             getShrine(id).warp(p, guiShrine);
-    }
-
-    public ShrineCore updateShrine(int id, ShulkerBox s, Beacon beacon) {
-        if (s.getCustomName() == null)
-            return null;
-
-        ShrineCore shrine = cores.get(id);
-        if (shrine == null) return null;
-        shrine.setShulker(s, s.getType() != Material.SHULKER_BOX, beacon);
-
-        return shrine;
     }
 
     public void loadShrines() {

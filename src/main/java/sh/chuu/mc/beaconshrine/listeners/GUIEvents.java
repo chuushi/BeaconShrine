@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryCreativeEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -29,11 +30,17 @@ public class GUIEvents implements Listener {
 
     @EventHandler (priority = EventPriority.LOWEST)
     public void guiClick(InventoryClickEvent ev) {
-        Player p = (Player) ev.getWhoClicked();
-        Inventory inv = ev.getClickedInventory();
-        ShrineManager.GuiView gui = manager.getGuiView(p);
+        if (ev instanceof InventoryCreativeEvent) return;
 
-        if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
+        Player p = (Player) ev.getWhoClicked();
+        ShrineManager.GuiView gui = manager.getGuiView(p);
+        if (gui == null) return;
+
+        Inventory inv = ev.getClickedInventory();
+        ShrineManager.GuiType viewType = gui.type();
+
+        //noinspection ConstantConditions "getGuiView() do NOT guarantee non-null
+        if (gui == null || viewType == ShrineManager.GuiType.SHOP)
             return;
 
         if (ev.getClick().isShiftClick()) {
@@ -44,9 +51,10 @@ public class GUIEvents implements Listener {
         ItemStack item = ev.getCurrentItem();
         boolean isTopInv = inv == ev.getView().getTopInventory();
 
-        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
-            if (ev.isRightClick() && isTopInv) {
+        if (viewType == ShrineManager.GuiType.CORE_WARP_LIST || viewType == ShrineManager.GuiType.SHARD_WARP_LIST) {
+            if (ev.isLeftClick() && isTopInv) {
                 ev.setCancelled(true);
+                // FIXME implement warp for shards
                 int clickId = ShrineGUI.getWarpIdGui(item);
                 if (clickId != -1) {
                     manager.clickedWarpGui(p, clickId, gui.shrine());
@@ -69,7 +77,7 @@ public class GUIEvents implements Listener {
         ev.setCancelled(true);
         if (item == null) return;
 
-        if (gui.type() == ShrineManager.GuiType.HOME_CORE || gui.type() == ShrineManager.GuiType.HOME_SHARD) {
+        if (viewType == ShrineManager.GuiType.HOME_CORE || viewType == ShrineManager.GuiType.HOME_SHARD) {
             manager.clickedGui(gui.shrine(), item, p);
         }
     }
@@ -82,7 +90,7 @@ public class GUIEvents implements Listener {
         if (gui == null || gui.type() == ShrineManager.GuiType.SHOP)
             return;
 
-        if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
+        if (gui.type() == ShrineManager.GuiType.CORE_WARP_LIST || gui.type() == ShrineManager.GuiType.SHARD_WARP_LIST) {
             ev.setCancelled(true);
             return;
         }
@@ -104,7 +112,8 @@ public class GUIEvents implements Listener {
         Inventory inv = view.getTopInventory();
 
         if (gui != null) {
-            if (gui.type() == ShrineManager.GuiType.WARP_LIST) {
+            boolean coreWarpList = gui.type() == ShrineManager.GuiType.CORE_WARP_LIST;
+            if (coreWarpList || gui.type() == ShrineManager.GuiType.SHARD_WARP_LIST) {
                 // account for the item that may have been on the hand
                 ItemStack cursor = view.getCursor();
                 if (cursor != null && ShrineGUI.isWarpGui(cursor)) {
@@ -112,13 +121,15 @@ public class GUIEvents implements Listener {
                     view.setCursor(null);
                 }
 
-                List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
-                List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine().id());
+                if (coreWarpList) {
+                    List<Integer> oldList = plugin.getCloudManager().getTunedShrineList(p);
+                    List<Integer> newList = ShrineGUI.getWarpOrderGui(inv, gui.shrine().id());
 
-                if (oldList.equals(newList)) return;
+                    if (oldList.equals(newList)) return;
 
-                oldList.clear();
-                oldList.addAll(newList);
+                    oldList.clear();
+                    oldList.addAll(newList);
+                }
             }
             return;
         }
