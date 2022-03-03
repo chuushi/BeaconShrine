@@ -84,6 +84,7 @@ public class ShrineEvents implements Listener {
                                 itemToSet = shrineCore.activatorItem();
                             } else {
                                 // TODO make distance configurable
+                                // TODO Move distance to Vars??
                                 if (shrineCore.distanceSquaredXZ(cs.shulker.getX(), cs.shulker.getZ()) > 562500) {// 750^2
                                     // TODO move to Vars
                                     ev.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
@@ -99,6 +100,7 @@ public class ShrineEvents implements Listener {
                         }
 
                         ev.setCancelled(true);
+
                         inv.setItem(empty, itemToSet);
                         item.setAmount(item.getAmount() - 1);
                         // TODO move to Vars

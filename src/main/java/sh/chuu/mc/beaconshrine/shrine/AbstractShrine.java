@@ -15,6 +15,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
@@ -156,7 +158,7 @@ public abstract class AbstractShrine {
      * @param from The origin shrine of teleportation
      * @return Init record of just xyz coords
      */
-    protected abstract WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from);
+    protected abstract WarpSequenceInit preWarpSequence(Player p, AbstractShrine from);
 
     /**
      * Warp Teleportation Sequence
@@ -166,6 +168,32 @@ public abstract class AbstractShrine {
      */
     protected abstract boolean warpSequence(int step, WarpSequence ws, Player p);
 
+    protected boolean warpSequenceFromShrine(int step, WarpSequence ws, Player p) {
+        Location loc = p.getLocation();
+
+        ParticleUtils.beam(loc,ParticleUtils.getDiff(x, y, z, loc), dustColor());
+
+        if (step > 20) {
+            return loc.getX() != ws.initX || loc.getY() != ws.initY || loc.getZ() != ws.initZ;
+        } else if (step == 20) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 40, 0, false, false, false));
+            return false;
+        } else if (step == 0) {
+            Location to = loc.clone();
+            to.setX(ws.newX);
+            to.setY(ws.newY);
+            to.setZ(ws.newZ);
+
+            ParticleUtils.warpBoom(loc, ws.color);
+            p.teleport(to);
+            p.removePotionEffect(PotionEffectType.LEVITATION);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, false, false, false));
+            return false;
+        } else if (step == -1) {
+            ParticleUtils.warpBoom(loc, ws.color);
+            return true;
+        } else return step == -20;
+    }
 
     public Inventory getInventory() {
         BlockState state = w.getBlockAt(x, y, z).getState();
@@ -214,7 +242,7 @@ public abstract class AbstractShrine {
             return CompletableFuture.completedFuture(false);
         }
 
-        WarpSequenceInit warpSequenceInit = warpSequenceInit(p, from);
+        WarpSequenceInit warpSequenceInit = preWarpSequence(p, from);
         if (warpSequenceInit == null)
             return CompletableFuture.completedFuture(false);
 
@@ -289,16 +317,11 @@ public abstract class AbstractShrine {
 
         @Override
         public void run() {
-            Location loc = p.getLocation();
-            final Particle.DustOptions dustOpt = dustColor();
-
             if (i == 0) result.complete(true);
             if (warpSequence(i, this, p)) {
                 if (i > 0) result.complete(false);
                 this.cancel();
             }
-
-            ParticleUtils.warpWarmUp(loc, dustOpt, i);
             i--;
         }
 

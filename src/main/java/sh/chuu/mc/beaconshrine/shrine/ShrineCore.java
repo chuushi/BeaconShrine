@@ -2,9 +2,11 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import com.google.common.collect.ImmutableList;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
@@ -222,6 +224,7 @@ public class ShrineCore extends AbstractShrine {
         shards.clear();
         int i = 0;
         for (ItemStack item : getInventory()) {
+            // FIXME Shard distance check
             if (item == null || item.getType() != Material.COMPASS) continue;
 
             ItemMeta meta = item.getItemMeta();
@@ -259,8 +262,8 @@ public class ShrineCore extends AbstractShrine {
     }
 
     @Override
-    protected WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from) {
-        if (from instanceof ShrineShard) return warpSequenceFromShrineInit(p, from);
+    protected WarpSequenceInit preWarpSequence(Player p, AbstractShrine from) {
+        if (from instanceof ShrineShard) return preWarpSequenceFromShrine(p, from);
 
         final double newY;
         if (w.getEnvironment() == World.Environment.NETHER) {
@@ -292,14 +295,16 @@ public class ShrineCore extends AbstractShrine {
             ParticleUtils.beam(loc, up, dustColor());
             ParticleUtils.paperIgnitionSound(p);
         }
-        return new WarpSequenceInit(100, x + 0.5, newY, z + 0.5, false);
+        return new WarpSequenceInit(200, x + 0.5, newY, z + 0.5, false);
     }
 
     @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
         if (ws.isShard) return warpSequenceFromShrine(step, ws, p);
-
         Location loc = p.getLocation();
+        final Particle.DustOptions dustOpt = dustColor();
+
+        ParticleUtils.warpWarmUp(loc, dustOpt, step);
 
         if (step > 30) {
             return loc.getX() != ws.initX || loc.getY() != ws.initY || loc.getZ() != ws.initZ;
@@ -312,7 +317,7 @@ public class ShrineCore extends AbstractShrine {
         } else if (step == 2) {
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1, false, false, false));
         } else if (step == 0) {
-            Location to = p.getLocation();
+            Location to = loc.clone();
             to.setX(ws.newX);
             to.setY(ws.newY);
             to.setZ(ws.newZ);
@@ -322,46 +327,35 @@ public class ShrineCore extends AbstractShrine {
             p.teleport(to);
             p.removePotionEffect(PotionEffectType.LEVITATION);
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, w.getEnvironment() == World.Environment.NETHER ? 100 : 200, 0, false, false, false));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false, false));
         } else if (step == -1) {
             ParticleUtils.warpBoom(loc, ws.color);
         } else return step == -100;
         return false;
     }
 
-    protected WarpSequenceInit warpSequenceFromShrineInit(Player p, AbstractShrine from) {
+    protected WarpSequenceInit preWarpSequenceFromShrine(Player p, AbstractShrine from) {
         // TODO Set destination as somewhere below or above the Shrine
-//        ShrineShard.LodestoneBlock ls = getLodestone();
-//        if (ls == null)
-//            return null;
-//
-//        Block tpSpot = null;
-//        for (int i = 0; i < ShrineCore.RADIUS; i++) {
-//            if (ls.block.isPassable() && ls.block.getRelative(BlockFace.UP).isPassable()) {
-//                tpSpot = ls.block;
-//                break;
-//            }
-//        }
-//        if (tpSpot == null)
-//            return null;
-
-//        return new WarpSequenceInit(100, tpSpot.getX() + 0.5, tpSpot.getY(), tpSpot.getZ() + 0.5, true);
-        return null;
-    }
-
-    protected boolean warpSequenceFromShrine(int step, WarpSequence ws, Player p) {
-        if (step == 0) {
-            Location to = p.getLocation();
-            to.setX(ws.newX);
-            to.setY(ws.newY);
-            to.setZ(ws.newZ);
-
-            ParticleUtils.warpBoom(p.getLocation(), ws.color);
-            p.teleport(to);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
-            return true;
+        Block tpSpot = null;
+        Block ptr = w.getBlockAt(x, y - RADIUS - 5, z);
+        boolean prevIsGround = !ptr.isPassable();
+        int r = RADIUS * 2 + 7;
+        for (int i = 0; i < r; i++) {
+            ptr = ptr.getRelative(BlockFace.UP);
+            boolean nextIsPassable = ptr.isPassable();
+            if (prevIsGround && nextIsPassable) {
+                tpSpot = ptr;
+                break;
+            }
+            prevIsGround = !nextIsPassable;
         }
-        return false;
+        if (tpSpot == null) {
+            // TODO Move to Vars
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The destination is obstructed"));
+            return null;
+        }
+
+        return new WarpSequenceInit(100, tpSpot.getX() + 0.5, tpSpot.getY(), tpSpot.getZ() + 0.5, true);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package sh.chuu.mc.beaconshrine.shrine;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,6 +40,7 @@ public class ShrineShard extends AbstractShrine {
 
     public ShrineShard(int id, ShrineCore parent, Map<?, ?> ss) {
         super(id, ss);
+        this.index = (Integer) ss.get("i");
         this.parent = parent;
         @SuppressWarnings("unchecked")
         List<Integer> loc = (List<Integer>) ss.get("lodestone");
@@ -114,49 +117,33 @@ public class ShrineShard extends AbstractShrine {
     }
 
     @Override
-    protected WarpSequenceInit warpSequenceInit(Player p, AbstractShrine from) {
+    protected WarpSequenceInit preWarpSequence(Player p, AbstractShrine from) {
         LodestoneBlock ls = getLodestone();
         if (ls == null)
             return null;
 
         Block tpSpot = null;
         Block ptr = ls.block;
-        int r = ShrineCore.RADIUS + 2;
+        int r = ShrineCore.RADIUS + 1;
         for (int i = 0; i < r; i++) {
             ptr = ptr.getRelative(ls.face);
             if (ptr.isPassable()) {
-                if (ptr.getRelative(BlockFace.UP).isPassable()) {
-                    tpSpot = ptr;
-                    break;
-                }
-                Block down = ptr.getRelative(BlockFace.DOWN);
-                if (down.isPassable()) {
-                    tpSpot = down;
-                    break;
-                }
+                tpSpot = ptr;
+                break;
             }
         }
-        if (tpSpot == null)
+        if (tpSpot == null) {
+            // TODO Move to Vars
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The destination is obstructed"));
             return null;
+        }
 
         return new WarpSequenceInit(100, tpSpot.getX() + 0.5, tpSpot.getY(), tpSpot.getZ() + 0.5, true);
     }
 
     @Override
     protected boolean warpSequence(int step, WarpSequence ws, Player p) {
-        // FIXME Complete soon!
-        if (step == 0) {
-            Location to = p.getLocation();
-            to.setX(ws.newX);
-            to.setY(ws.newY);
-            to.setZ(ws.newZ);
-
-            ParticleUtils.warpBoom(p.getLocation(), ws.color);
-            p.teleport(to);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 2, 0, false, false, false));
-            return true;
-        }
-        return false;
+        return warpSequenceFromShrine(step, ws, p);
     }
 
     @Override
@@ -171,6 +158,7 @@ public class ShrineShard extends AbstractShrine {
     @Override
     public HashMap<String, Object> save() {
         HashMap<String, Object> ret = super.save();
+        ret.put("i", index);
         ret.put("lodestone", new int[]{lodestone.getBlockX(), lodestone.getBlockY(), lodestone.getBlockZ()});
         ret.put("lodestoneF", lodestoneFace.name());
         return ret;
