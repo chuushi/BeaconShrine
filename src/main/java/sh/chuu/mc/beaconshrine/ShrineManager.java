@@ -108,7 +108,7 @@ public class ShrineManager {
      * @param isCore Whether the Shrine type is Core
      * @return true if opened, false on failure
      */
-    public boolean openShrineGui(Player p, int id, ShulkerBox shulker, boolean isCore) {
+    public void openShrineGui(Player p, int id, ShulkerBox shulker, boolean isCore) {
 
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
             if (isCore)
@@ -116,10 +116,17 @@ public class ShrineManager {
             else
 			// TODO Move to Vars
 				p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You cannot deciper this shard's origin"));
-            return true;
+            return;
         }
 
+
         ShrineCore core = cores.get(id);
+        if (!core.isWithinDistance(shulker.getX(), shulker.getZ())) {
+            // TODO move to Vars
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
+            return;
+        }
+
         AbstractShrine s = null;
         if (isCore) {
             s = core;
@@ -131,14 +138,17 @@ public class ShrineManager {
                 }
             }
         }
-        if (s == null || !s.isValid()) return false;
+
+        if (s == null || !s.isValid()) {
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE_SETUP);
+            return;
+        }
 
         Location loc = p.getLocation();
         Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);
         ParticleUtils.beam(loc, vector, s.dustColor()); // TODO Move particle logic to ShrineCore/ShrineShard
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, isCore ? GuiType.HOME_CORE : GuiType.HOME_SHARD));
-        return true;
     }
 
     private void doAttuneAnimation(Player p, int id) {

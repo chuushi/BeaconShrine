@@ -85,7 +85,7 @@ public class ShrineEvents implements Listener {
                             } else {
                                 // TODO make distance configurable
                                 // TODO Move distance to Vars??
-                                if (shrineCore.distanceSquaredXZ(cs.shulker.getX(), cs.shulker.getZ()) > 562500) {// 750^2
+                                if (!shrineCore.isWithinDistance(cs.shulker.getX(), cs.shulker.getZ())) {
                                     // TODO move to Vars
                                     ev.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
                                     return;
@@ -129,8 +129,7 @@ public class ShrineEvents implements Listener {
 
     private void openGUI(Player p, int id, ClickedShulker sh) {
         p.swingMainHand();
-        if (!manager.openShrineGui(p, id, sh.shulker, sh.beacon != null))
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, shrineInitFailText);
+        manager.openShrineGui(p, id, sh.shulker, sh.beacon != null);
     }
 
     @EventHandler(ignoreCancelled = true)

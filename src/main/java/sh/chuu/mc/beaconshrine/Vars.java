@@ -29,5 +29,5 @@ public interface Vars {
     BaseComponent NO_CLEARANCE = new TextComponent("Couldn't find any clearance for this shrine");
     BaseComponent INVALID_SHRINE = new TextComponent("Unable to teleport to the broken shrine");
     BaseComponent INVALID_WARPING = new TextComponent("Move to cancel the current warp first");
-    BaseComponent shrineInitFailText = new TextComponent("Shrine is not set up properly; run /shrinehelp");
+    BaseComponent INVALID_SHRINE_SETUP = new TextComponent("Shrine is not set up properly");
 }

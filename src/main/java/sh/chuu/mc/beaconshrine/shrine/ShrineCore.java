@@ -224,20 +224,23 @@ public class ShrineCore extends AbstractShrine {
         shards.clear();
         int i = 0;
         for (ItemStack item : getInventory()) {
-            // FIXME Shard distance check
             if (item == null || item.getType() != Material.COMPASS) continue;
 
             ItemMeta meta = item.getItemMeta();
             if (!(meta instanceof CompassMeta cm) || !cm.hasLodestone()) continue;
 
             Location lodestone = cm.getLodestone();
-            if (lodestone == null) continue;
+            if (lodestone == null || !isWithinDistance(lodestone.getBlockX(), lodestone.getBlockZ())) continue;
 
             ShardShulkerFromLodestone sbfl = getShulkerAttachedToLodestone(lodestone);
             if (sbfl != null) shards.add(new ShrineShard(id, i, this, sbfl.shulker, lodestone, sbfl.face.getOppositeFace()));
 
             i++;
         }
+    }
+
+    public boolean isWithinDistance(int x, int z) {
+        return distanceSquaredXZ(x, z) <= 562500; // 750^2
     }
 
     public record ShardShulkerFromLodestone(ShulkerBox shulker, BlockFace face) {}
