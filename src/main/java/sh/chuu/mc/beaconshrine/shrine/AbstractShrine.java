@@ -2,6 +2,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -239,6 +240,11 @@ public abstract class AbstractShrine {
         }
         if (w != p.getWorld()) {
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, SAME_DIMENSION_REQUIRED);
+            return CompletableFuture.completedFuture(false);
+        }
+        if (!w.getWorldBorder().isInside(getShulkerLocation(false))) {
+            // TODO Move to Vars
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Shrine is outside of world border"));
             return CompletableFuture.completedFuture(false);
         }
 

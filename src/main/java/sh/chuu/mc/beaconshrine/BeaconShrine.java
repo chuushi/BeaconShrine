@@ -40,7 +40,6 @@ public class BeaconShrine extends JavaPlugin {
         return shrineManager;
     }
 
-    // TODO Add a worldborder check
     // TODO For GUI, remove hand item before closing the GUI or item may dupe on plugin disable
 
     @Override
