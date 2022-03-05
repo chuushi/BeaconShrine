@@ -10,10 +10,11 @@ public interface Vars {
     Material SHRINE_SHARD_ACTIVATOR_ITEM_TYPE = Material.AMETHYST_SHARD;
     String SHRINE_CORE_ITEM_NAME = "Shrine Activator";
     String SHRINE_SHARD_ITEM_NAME = "Shrine Shard Activator";
-    String SHRINE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
-    String SHARD_INDEX_HEADER = ChatColor.DARK_GRAY + "Index: ";
+    String SHRINE_ID_HEADER = ChatColor.GRAY + "ID: ";
+    String SHARD_INDEX_HEADER = ChatColor.GRAY + "Index: ";
     String SHARD_INDEX_NOT_TUNED = ChatColor.DARK_GRAY.toString() + ChatColor.ITALIC + "Not yet tuned";
     String SHRINE_YOU_ARE_HERE = ChatColor.GRAY + "You are here";
+    String KEEP_INSIDE_SHULKER_MSG = ChatColor.RED.toString() + ChatColor.ITALIC + "Put and keep this item in shulker box";
     Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
     Material SHOP_ITEM_TYPE = Material.EMERALD;
     Material ENDER_CHEST_ITEM_TYPE = Material.ENDER_CHEST;

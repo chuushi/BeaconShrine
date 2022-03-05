@@ -188,8 +188,8 @@ public class ShrineCore extends AbstractShrine {
         warpScroll.addIngredient(new ItemStack(Material.DIAMOND, 2));
 
         MerchantRecipe shrineShard = new MerchantRecipe(shardActivatorItem(), 0, 26, false);
-        shrineShard.addIngredient(new ItemStack(SHRINE_SHARD_ACTIVATOR_ITEM_TYPE, 2));
-        shrineShard.addIngredient(new ItemStack(Material.ENDER_PEARL, 1));
+        shrineShard.addIngredient(new ItemStack(SHRINE_SHARD_ACTIVATOR_ITEM_TYPE, 12));
+        shrineShard.addIngredient(new ItemStack(Material.ENDER_PEARL, 16));
 
         merchant.setRecipes(ImmutableList.of(warpScroll, shrineShard));
         p.openMerchant(merchant, true);

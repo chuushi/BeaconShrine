@@ -86,6 +86,7 @@ public interface BeaconShireItemUtils {
         im.setLore(ImmutableList.of(
                 color + name,
                 SHRINE_ID_HEADER + id,
+                KEEP_INSIDE_SHULKER_MSG,
                 ChatColor.DARK_GRAY + (isCore ? "at " : "Core at ") + x + ", " + z
         ));
         im.addEnchant(Enchantment.DURABILITY, 1, true);
