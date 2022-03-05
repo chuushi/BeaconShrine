@@ -5,7 +5,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
@@ -13,8 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ParticleUtils;
 
@@ -26,7 +23,7 @@ import static sh.chuu.mc.beaconshrine.Vars.*;
 
 public class ShrineShard extends AbstractShrine {
     private final ShrineCore parent;
-    private int index;
+    private final int index;
     private Location lodestone; // TODO Replace with relative block face of Lodestone instead
     private BlockFace lodestoneFace;
 
@@ -102,7 +99,6 @@ public class ShrineShard extends AbstractShrine {
         // Add Ender Chest if it exists in Shulker inventory
         if (invState.getInventory().contains(Material.ENDER_CHEST)) gui.setItem(4, ShrineGUI.ENDER_CHEST_ITEM);
         gui.setItem(2, ShrineGUI.SHARD_LIST_ITEM);
-        // TODO add direct to main shrine
         return gui;
     }
 
@@ -112,8 +108,8 @@ public class ShrineShard extends AbstractShrine {
     }
 
     @Override
-    public ItemStack createWarpScrollGuiItem(boolean urHere) {
-        return ShrineGUI.createShardWarpGui(index, name, symbolItemType, chatColor, urHere);
+    public ItemStack createWarpScrollGuiItem(boolean urHere, Player p) {
+        return ShrineGUI.createShardWarpGui(index, name, symbolItemType, chatColor, urHere, p == null || cloudManager.isTunedWithShardLocation(p, x, z));
     }
 
     @Override

@@ -2,6 +2,7 @@ package sh.chuu.mc.beaconshrine.shrine;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
 import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.userstate.CloudManager;
@@ -111,7 +113,7 @@ public abstract class AbstractShrine {
     public abstract boolean isValid();
     public abstract Inventory getGui(Player p); // TODO Change unclear naming - this does NOT get a GUI. It opens a GUI to a player.
     public abstract ItemStack activatorItem();
-    public abstract ItemStack createWarpScrollGuiItem(boolean urHere);
+    public abstract ItemStack createWarpScrollGuiItem(boolean urHere, Player p);
     public abstract List<ShrineShard> getShards();
 
     public int id() { return id; }
@@ -149,7 +151,7 @@ public abstract class AbstractShrine {
 
     /**
      * Particles to show during idle
-     * @param step
+     * @param step tick/timing
      */
     protected abstract void theParticles(int step);
 
@@ -194,6 +196,51 @@ public abstract class AbstractShrine {
             ParticleUtils.warpBoom(loc, ws.color);
             return true;
         } else return step == -20;
+    }
+
+    public CompletableFuture<Boolean> doAttuneAnimation(Player p) {
+        ParticleUtils.shrineIgnitionSound(p);
+        final Location initLoc = p.getLocation();
+        final double initX = initLoc.getX();
+        final double initY = initLoc.getY();
+        final double initZ = initLoc.getZ();
+        CompletableFuture<Boolean> complete = new CompletableFuture<>();
+
+        new BukkitRunnable() {
+            final Vector vector = ParticleUtils.getDiff(x, y, z, p.getLocation());
+            private int step = 100;
+
+            @Override
+            public void run() {
+                Location newLoc = p.getLocation();
+                if (initX != newLoc.getX() || initY != newLoc.getY() || initZ != newLoc.getZ() || !isValid()) {
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                            new ComponentBuilder("Attuning cancelled due to movement or invalid shrine").create());
+                    complete.complete(false);
+                    this.cancel();
+                } else if (step == 0) {
+                    complete.complete(true);
+                    this.cancel();
+                    attuneComplete(p, initLoc);
+                } else if (step%20 == 0) {
+                    int secs = step / 20;
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                            new ComponentBuilder("Attuning with " + name + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create()
+                    );
+                }
+                ParticleUtils.attuning(initLoc, vector, dustColor(), step--);
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+        return complete;
+    }
+
+    private void attuneComplete(Player p, Location initLoc) {
+        plugin.getCloudManager().attuneShrine(p, this);
+        ParticleUtils.attuneBoom(initLoc, color());
+        p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                new ComponentBuilder("Attuned with " + name).create()
+        );
+        startParticles();
     }
 
     public Inventory getInventory() {

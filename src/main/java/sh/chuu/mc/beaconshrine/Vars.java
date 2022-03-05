@@ -12,6 +12,7 @@ public interface Vars {
     String SHRINE_SHARD_ITEM_NAME = "Shrine Shard Activator";
     String SHRINE_ID_HEADER = ChatColor.DARK_GRAY + "ID: ";
     String SHARD_INDEX_HEADER = ChatColor.DARK_GRAY + "Index: ";
+    String SHARD_INDEX_NOT_TUNED = ChatColor.DARK_GRAY.toString() + ChatColor.ITALIC + "Not yet tuned";
     String SHRINE_YOU_ARE_HERE = ChatColor.GRAY + "You are here";
     Material CLOUD_CHEST_ITEM_TYPE = Material.CHEST_MINECART;
     Material SHOP_ITEM_TYPE = Material.EMERALD;

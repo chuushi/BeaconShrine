@@ -74,6 +74,9 @@ public class ShrineEvents implements Listener {
                         if (empty == -1) return;
 
                         int itemID = shrineActivatorId(item);
+                        // TODO If ID is not existing, find the closest invalid Shrine and take it over.
+                        // TODO (not here) If ID exists but it's not close enough, invalidate the attempt to restore
+                        //  with the ingot.
 
                         final ItemStack itemToSet;
                         final ShrineCore shrineCore;

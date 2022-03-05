@@ -38,7 +38,6 @@ public class ShrineManager {
     private final File configFile;
     private final YamlConfiguration config;
     private final Map<Integer, ShrineCore> cores = new HashMap<>();
-    private final Set<ShrineShard> shards = new HashSet<>();
     private final Map<Player, GuiView> whichGui = new LinkedHashMap<>();
     private final Set<Player> attuning = new LinkedHashSet<>();
     private final Set<Player> warping = new LinkedHashSet<>();
@@ -101,32 +100,33 @@ public class ShrineManager {
     }
 
     /**
-     * Opens GUI for the corresponding shard
+     * Opens GUI for the corresponding shrine
      * @param p Player
      * @param id ID
      * @param shulker Shulker box
      * @param isCore Whether the Shrine type is Core
-     * @return true if opened, false on failure
      */
     public void openShrineGui(Player p, int id, ShulkerBox shulker, boolean isCore) {
 
         if (!plugin.getCloudManager().isTunedWithShrine(p, id)) {
-            if (isCore)
-                doAttuneAnimation(p, id);
-            else
-			// TODO Move to Vars
-				p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You cannot deciper this shard's origin"));
+            if (isCore) {
+                // TODO repeated code A
+                if (attuning.contains(p)) return;
+                attuning.add(p);
+                getShrine(id).doAttuneAnimation(p).thenAccept(res -> attuning.remove(p));
+            } else {
+                // TODO Move to Vars
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("You cannot decipher this shard's origin"));
+            }
             return;
         }
 
-
-        ShrineCore core = cores.get(id);
+        ShrineCore core = getShrine(id);
         if (!core.isWithinDistance(shulker.getX(), shulker.getZ())) {
             // TODO move to Vars
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("The shrine is too far away"));
             return;
         }
-
         AbstractShrine s = null;
         if (isCore) {
             s = core;
@@ -144,52 +144,19 @@ public class ShrineManager {
             return;
         }
 
+        if (!isCore && !plugin.getCloudManager().isTunedWithShardLocation(p, s.x(), s.z())) {
+            // TODO repeated code A
+            if (attuning.contains(p)) return;
+            attuning.add(p);
+            s.doAttuneAnimation(p).thenAccept(res -> attuning.remove(p));
+            return;
+        }
+
         Location loc = p.getLocation();
         Vector vector = ParticleUtils.getDiff(s.x(), s.y(), s.z(), loc);
         ParticleUtils.beam(loc, vector, s.dustColor()); // TODO Move particle logic to ShrineCore/ShrineShard
         p.openInventory(s.getGui(p));
         whichGui.put(p, new GuiView(s, isCore ? GuiType.HOME_CORE : GuiType.HOME_SHARD));
-    }
-
-    private void doAttuneAnimation(Player p, int id) {
-        if (attuning.contains(p)) return;
-        attuning.add(p);
-
-        ParticleUtils.shrineIgnitionSound(p);
-        new BukkitRunnable() {
-            final Location initLoc = p.getLocation();
-            final double x = initLoc.getX();
-            final double y = initLoc.getY();
-            final double z = initLoc.getZ();
-            final ShrineCore shrine = getShrine(id);
-            final Vector vector = ParticleUtils.getDiff(shrine.x(), shrine.y(), shrine.z(), p.getLocation());
-            final Particle.DustOptions dustColor = shrine.dustColor();
-            private int step = 100;
-
-            @Override
-            public void run() {
-                Location newLoc = p.getLocation();
-                if (x != newLoc.getX() || y != newLoc.getY() || z != newLoc.getZ() || !shrine.isValid()) {
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                            new ComponentBuilder("Attuning cancelled due to movement or invalid shrine").create());
-                    attuning.remove(p);
-                    this.cancel();
-                } else if (step == 0) {
-                    attuning.remove(p);
-                    this.cancel();
-                    plugin.getCloudManager().attuneShrine(p, id);
-                    ParticleUtils.attuneBoom(initLoc, shrine.color());
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                            new ComponentBuilder("Attuned with " + shrine.name()).create());
-                    shrine.startParticles();
-                } else if (step%20 == 0) {
-                    int secs = step /20;
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                            new ComponentBuilder("Attuning with " + shrine.name() + ", please wait " + secs + (secs == 1 ? " second" : " seconds")).create());
-                }
-                ParticleUtils.attuning(initLoc, vector, dustColor, step--);
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     public boolean warpContains(Player p) {
@@ -230,19 +197,19 @@ public class ShrineManager {
                 int id = (Integer) wids.get(i);
 
                 ShrineCore sm = cores.get(id);
-                ItemStack item = sm.createWarpScrollGuiItem(id == shrine.id());
+                ItemStack item = sm.createWarpScrollGuiItem(id == shrine.id(), p);
                 ret.setItem(i, item);
             }
         } else {
             ShrineCore sc = shrine instanceof ShrineShard ss ? ss.parent() : (ShrineCore) shrine;
-            ItemStack itemCore = sc.createWarpScrollGuiItem(shrine instanceof ShrineCore);
+            ItemStack itemCore = sc.createWarpScrollGuiItem(shrine instanceof ShrineCore, p);
             ret.setItem(0, itemCore);
 
             int last1 = Math.min(wids.size(), slots) + 1;
             for (int i = 1; i < last1; i++) {
                 ShrineShard ss = (ShrineShard) wids.get(i-1);
 
-                ItemStack item = ss.createWarpScrollGuiItem(ss == shrine);
+                ItemStack item = ss.createWarpScrollGuiItem(ss == shrine, p);
                 ret.setItem(i, item);
             }
         }
@@ -250,8 +217,7 @@ public class ShrineManager {
     }
 
     public GuiView closedShrineGui(HumanEntity p) {
-        @SuppressWarnings("SuspiciousMethodCalls")
-        GuiView gui = whichGui.remove(p);
+        GuiView gui = p instanceof Player ? whichGui.remove(p) : null;
         if (gui == null)
             return null;
         if (gui.shrine instanceof ShrineCore sc && gui.type == GuiType.SHOP) {

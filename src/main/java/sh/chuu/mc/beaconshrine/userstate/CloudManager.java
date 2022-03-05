@@ -16,6 +16,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.chuu.mc.beaconshrine.BeaconShrine;
+import sh.chuu.mc.beaconshrine.shrine.AbstractShrine;
+import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 import sh.chuu.mc.beaconshrine.utils.ExperienceUtils;
 
@@ -83,10 +85,20 @@ public class CloudManager implements Listener {
         return is.isTunedWithShrine(id);
     }
 
-    public boolean attuneShrine(Player p, int id) {
+    public boolean isTunedWithShardLocation(Player p, int x, int z) {
         UserCloud is = invs.get(p);
         if (is == null) return false;
-        return is.attuneShrine(id);
+        return is.isTunedWithShard(x, z);
+    }
+
+    public boolean attuneShrine(Player p, AbstractShrine shrine) {
+        UserCloud is = invs.get(p);
+        if (is == null) return false;
+        if (shrine instanceof ShrineCore) {
+            return is.attuneShrine(shrine.id());
+        } else {
+            return is.attuneShardLocation(shrine.x(), shrine.z());
+        }
     }
 
     public List<Integer> getTunedShrineList(Player p) {

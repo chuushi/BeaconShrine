@@ -19,6 +19,7 @@ import sh.chuu.mc.beaconshrine.ShrineManager;
 import sh.chuu.mc.beaconshrine.shrine.ShrineCore;
 import sh.chuu.mc.beaconshrine.shrine.ShrineGUI;
 import sh.chuu.mc.beaconshrine.shrine.ShrineShard;
+import sh.chuu.mc.beaconshrine.userstate.CloudManager;
 import sh.chuu.mc.beaconshrine.utils.BeaconShireItemUtils;
 
 import java.util.List;
@@ -28,6 +29,7 @@ import static sh.chuu.mc.beaconshrine.Vars.*;
 public class GUIEvents implements Listener {
     private final BeaconShrine plugin = BeaconShrine.getInstance();
     private final ShrineManager manager = plugin.getShrineManager();
+    private final CloudManager cloudManager = plugin.getCloudManager();
 
     @EventHandler (priority = EventPriority.LOWEST)
     public void guiClick(InventoryClickEvent ev) {

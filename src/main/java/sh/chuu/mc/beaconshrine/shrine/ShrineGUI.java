@@ -93,7 +93,7 @@ public class ShrineGUI {
         return ret;
     }
 
-    public static ItemStack createShardWarpGui(int index, String name, Material symbol, ChatColor cc, boolean urHere) {
+    public static ItemStack createShardWarpGui(int index, String name, Material symbol, ChatColor cc, boolean urHere, boolean isTuned) {
         ItemStack ret = new ItemStack(symbol == null ? SHARD_LIST_ITEM_TYPE : symbol);
         ItemMeta im = ret.getItemMeta();
         String color = cc == ChatColor.RESET ? ChatColor.WHITE.toString() : ChatColor.RESET.toString() + cc;
@@ -101,9 +101,11 @@ public class ShrineGUI {
         im.setDisplayName(ChatColor.LIGHT_PURPLE + "Warp to: " + color + name);
         if (urHere) {
             im.setLore(ImmutableList.of(SHRINE_YOU_ARE_HERE));
-        } else {
+        } else if (isTuned) {
             im.setLore(ImmutableList.of(SHARD_INDEX_HEADER + index));
             im.addEnchant(Enchantment.DURABILITY, 1, true);
+        } else {
+            im.setLore(ImmutableList.of(SHARD_INDEX_NOT_TUNED));
         }
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_ATTRIBUTES);
         ret.setItemMeta(im);

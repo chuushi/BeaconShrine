@@ -212,7 +212,7 @@ public class ShrineCore extends AbstractShrine {
     }
 
     @Override
-    public ItemStack createWarpScrollGuiItem(boolean urHere) {
+    public ItemStack createWarpScrollGuiItem(boolean urHere, Player p) {
         return ShrineGUI.createCoreWarpGui(id, name, symbolItemType, chatColor, urHere);
     }
 
