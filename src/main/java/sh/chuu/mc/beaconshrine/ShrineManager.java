@@ -140,7 +140,11 @@ public class ShrineManager {
         }
 
         if (s == null || !s.isValid()) {
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE_SETUP);
+            // TODO Move to Vars
+            if (isCore)
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, INVALID_SHRINE_SETUP);
+            else
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Add lodestone compass to main shrine first"));
             return;
         }
 
